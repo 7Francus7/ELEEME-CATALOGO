@@ -1,10 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { CATEGORIES, formatPrice } from '../data/products'
 import { XIcon } from './Icons'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
-// Cambiá esta contraseña y no la compartas. Al ser un sitio estático, es
-// protección contra edición casual — no contra alguien técnico que inspeccione el código.
 const ADMIN_PASSWORD = 'eleeme2024'
 
 const EMPTY_FORM = {
@@ -43,21 +41,19 @@ function resizeImage(file) {
   })
 }
 
-// Icono de flecha arriba
-const ArrowUpIcon = ({ className }) => (
+// Iconos locales para el panel
+const EditIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
   </svg>
 )
 
-// Icono de flecha abajo
-const ArrowDownIcon = ({ className }) => (
+const TrashIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
   </svg>
 )
 
-// Icono de duplicar
 const DuplicateIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
@@ -72,21 +68,14 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
   const [editingId, setEditingId] = useState(null)
   const [imageProcessing, setImageProcessing] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
-  const [listSearch, setListSearch] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeView, setActiveView] = useState('list') // 'list' | 'form'
+  
   const fileRef = useRef()
   const formRef = useRef()
 
   const f = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
-  // Productos filtrados en la lista lateral
-  const filteredList = listSearch.trim()
-    ? products.filter((p) =>
-        p.nombre.toLowerCase().includes(listSearch.toLowerCase()) ||
-        p.categoria.toLowerCase().includes(listSearch.toLowerCase())
-      )
-    : products
-
-  // ── Autenticación ────────────────────────────────────────────────────────────
   const handleLogin = (e) => {
     e.preventDefault()
     if (pwInput === ADMIN_PASSWORD) {
@@ -98,7 +87,6 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
     }
   }
 
-  // ── Formulario ───────────────────────────────────────────────────────────────
   const handleEdit = (product) => {
     setForm({
       ...product,
@@ -106,35 +94,38 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       precio_original: product.precio_original ? String(product.precio_original) : '',
     })
     setEditingId(product.id)
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActiveView('form')
+    setTimeout(() => formRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50)
   }
 
   const handleNew = () => {
     setForm(EMPTY_FORM)
     setEditingId(null)
+    setActiveView('form')
+    setTimeout(() => formRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50)
   }
 
   const handleDelete = (id) => {
-    if (!window.confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return
+    if (!window.confirm('¿Eliminar este producto?')) return
     onSave(products.filter((p) => p.id !== id))
-    if (editingId === id) handleNew()
+    if (editingId === id) {
+      setEditingId(null)
+      setForm(EMPTY_FORM)
+    }
   }
 
-  // ── Duplicar producto ────────────────────────────────────────────────────────
   const handleDuplicate = (product) => {
     const newId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1
     const duplicated = {
       ...product,
       id: newId,
-      nombre: `${product.nombre} (copia)`,
+      nombre: `${product.nombre} (Copia)`,
       destacado: false,
     }
     onSave([...products, duplicated])
-    setSaveStatus('Duplicado ✓')
-    setTimeout(() => setSaveStatus(''), 2000)
+    handleEdit(duplicated)
   }
 
-  // ── Reordenar productos ──────────────────────────────────────────────────────
   const handleMoveUp = (index) => {
     if (index === 0) return
     const updated = [...products]
@@ -157,10 +148,9 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       const base64 = await resizeImage(file)
       setForm((prev) => ({ ...prev, imagen_url: base64 }))
     } catch {
-      alert('No se pudo procesar la imagen. Probá con otro archivo o usá una URL.')
+      alert('Error al procesar la imagen.')
     } finally {
       setImageProcessing(false)
-      // Reset el input para poder subir el mismo archivo de nuevo si hace falta
       e.target.value = ''
     }
   }
@@ -183,449 +173,302 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       updated = [...products, { ...form, id: newId, precio, precio_original }]
     }
 
-    // Solo un producto puede ser el destacado del banner
     if (form.destacado) {
       updated = updated.map((p) => ({ ...p, destacado: p.id === targetId }))
     }
 
     try {
       onSave(updated)
-      setSaveStatus('Guardado ✓')
+      setSaveStatus('¡Guardado!')
       setTimeout(() => setSaveStatus(''), 2500)
-      handleNew()
+      setActiveView('list')
     } catch (err) {
-      if (err?.name === 'QuotaExceededError') {
-        alert(
-          'El almacenamiento del navegador está lleno.\n\n' +
-          'Solución: usá URL de imagen (ej: subí la foto a imgbb.com y pegá el link) ' +
-          'en lugar de archivos subidos desde el dispositivo.'
-        )
-      } else {
-        alert('Error al guardar. Revisá los datos e intentá de nuevo.')
-      }
+      alert('Error al guardar. Si es por espacio, usá una URL de imagen.')
     }
   }
 
-  const handleReset = () => {
-    if (!window.confirm('¿Restaurar el catálogo de ejemplo? Perderás todos los cambios actuales.')) return
-    onReset()
-    handleNew()
-  }
+  const filteredProducts = products.filter(p => 
+    p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.categoria.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Pantalla de contraseña
-  // ────────────────────────────────────────────────────────────────────────────
   if (!authenticated) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-        <div className="bg-white dark:bg-[#1c1c1e] rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-slide-up relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#6e6e73] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
-
-          <div className="text-center mb-6">
-            <div className="text-3xl mb-3">🔐</div>
-            <h2 className="text-xl font-semibold text-[#1d1d1f] dark:text-white">Panel Admin</h2>
-            <p className="text-sm text-[#6e6e73] dark:text-[#86868b] mt-1">
-              ELEEME · Acceso restringido
-            </p>
+      <div className="fixed inset-0 z-50 bg-[#f5f5f7] dark:bg-black flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-[#1c1c1e] rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-scale-in">
+          <div className="text-center mb-8">
+            <span className="text-4xl">🔐</span>
+            <h2 className="text-xl font-bold mt-4 dark:text-white">Panel Admin</h2>
+            <p className="text-sm text-[#86868b] mt-1">Ingresá para gestionar ELEEME</p>
           </div>
-
-          <form onSubmit={handleLogin} className="space-y-3">
+          <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="password"
               placeholder="Contraseña"
               value={pwInput}
               onChange={(e) => setPwInput(e.target.value)}
+              className="w-full bg-[#f5f5f7] dark:bg-[#2c2c2e] dark:text-white rounded-xl px-4 py-4 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]"
               autoFocus
-              className={`w-full bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white rounded-xl px-4 py-3 text-sm outline-none transition-all ${
-                pwError
-                  ? 'ring-2 ring-red-500'
-                  : 'focus:ring-2 focus:ring-[#0071e3]'
-              }`}
             />
-            {pwError && (
-              <p className="text-red-500 text-xs text-center animate-slide-down">Contraseña incorrecta</p>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-[#1d1d1f] dark:bg-white text-white dark:text-black font-medium py-3 rounded-xl text-sm hover:opacity-80 transition-opacity"
-            >
-              Ingresar
+            {pwError && <p className="text-red-500 text-xs text-center">Contraseña incorrecta</p>}
+            <button type="submit" className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl text-sm active:scale-95 transition-all">
+              Entrar
             </button>
+            <button type="button" onClick={onClose} className="w-full text-sm text-[#86868b] mt-2">Volver al sitio</button>
           </form>
         </div>
       </div>
     )
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Panel principal
-  // ────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-50 bg-[#f5f5f7] dark:bg-black flex flex-col animate-fade-in">
+    <div className="fixed inset-0 z-50 bg-[#f5f5f7] dark:bg-black flex flex-col animate-fade-in overflow-hidden">
+      
+      {/* Header Panel */}
+      <header className="bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#0071e3] flex items-center justify-center text-white text-xs font-black">E</div>
+          <div>
+            <h1 className="font-black text-sm sm:text-lg tracking-tighter dark:text-white leading-tight uppercase">ADMIN ELEEME</h1>
+            <p className="text-[10px] text-[#86868b] font-bold uppercase tracking-widest hidden sm:block">Control de Inventario</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {saveStatus && <span className="text-xs font-bold text-green-500 mr-2 animate-pulse">{saveStatus}</span>}
+          <button onClick={onClose} className="p-2 hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] rounded-full transition-colors text-[#86868b]">
+            <XIcon className="w-6 h-6" />
+          </button>
+        </div>
+      </header>
 
-      {/* ── Header del panel ─────────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-[#1c1c1e] border-b border-gray-200 dark:border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between flex-shrink-0">
-        <div>
-          <p
-            className="font-black text-[#1d1d1f] dark:text-white text-base"
-            style={{ letterSpacing: '-0.04em' }}
-          >
-            ELEEME
-          </p>
-          <p className="text-xs text-[#6e6e73] dark:text-[#86868b]">Panel de administración</p>
-        </div>
-        <div className="flex items-center gap-4">
-          {saveStatus && (
-            <span className="text-sm font-medium text-green-500 animate-slide-down">{saveStatus}</span>
-          )}
-          <button
-            onClick={handleReset}
-            className="text-xs text-[#6e6e73] dark:text-[#86868b] hover:text-red-500 transition-colors hidden sm:block"
-          >
-            Restaurar catálogo ejemplo
-          </button>
-          <button
-            onClick={onClose}
-            className="flex items-center gap-1.5 text-sm text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
-          >
-            <XIcon className="w-4 h-4" />
-            Cerrar
-          </button>
-        </div>
+      {/* Selector de Vista (Solo Móvil) */}
+      <div className="lg:hidden flex bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 sticky top-0 z-10">
+        <button 
+          onClick={() => setActiveView('list')}
+          className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeView === 'list' ? 'text-[#0071e3] border-b-2 border-[#0071e3]' : 'text-[#86868b]'}`}
+        >
+          Productos ({products.length})
+        </button>
+        <button 
+          onClick={handleNew}
+          className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeView === 'form' ? 'text-[#0071e3] border-b-2 border-[#0071e3]' : 'text-[#86868b]'}`}
+        >
+          {editingId ? 'Editando' : '+ Añadir'}
+        </button>
       </div>
 
-      {/* ── Body: lista izquierda + formulario derecho ───────────────────────── */}
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
-
-        {/* Lista de productos */}
-        <div className="lg:w-2/5 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-white/10 overflow-y-auto bg-white dark:bg-[#1c1c1e] flex flex-col">
-          {/* Header de la lista con búsqueda */}
-          <div className="px-4 py-3 border-b border-gray-100 dark:border-white/10 sticky top-0 bg-white dark:bg-[#1c1c1e] z-10 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-[#1d1d1f] dark:text-white">
-                {products.length} {products.length === 1 ? 'producto' : 'productos'}
-              </p>
-              <button
-                onClick={handleNew}
-                className="text-sm font-medium text-[#0071e3] hover:underline"
-              >
-                + Nuevo
-              </button>
-            </div>
-            {/* Búsqueda en lista */}
-            {products.length > 3 && (
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row relative">
+        
+        {/* Lista Lateral */}
+        <div className={`
+          flex-1 lg:w-[420px] lg:flex-none border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e] flex flex-col
+          ${activeView === 'list' ? 'flex' : 'hidden lg:flex'}
+        `}>
+          <div className="p-4 border-b border-gray-50 dark:border-white/5">
+            <div className="relative group">
               <input
                 type="text"
-                placeholder="Buscar en el catálogo..."
-                value={listSearch}
-                onChange={(e) => setListSearch(e.target.value)}
-                className="w-full bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-[#0071e3] transition-all placeholder-[#86868b]"
+                placeholder="Buscar por nombre o categoría..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#f5f5f7] dark:bg-[#2c2c2e] dark:text-white rounded-2xl px-5 py-4 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
               />
-            )}
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0071e3] transition-colors">🔍</span>
+            </div>
           </div>
 
-          {filteredList.length === 0 && (
-            <p className="text-sm text-[#6e6e73] dark:text-[#86868b] text-center py-8">
-              {listSearch ? `Sin resultados para "${listSearch}"` : 'Sin productos. Agregá el primero →'}
-            </p>
-          )}
-
-          <ul className="divide-y divide-gray-100 dark:divide-white/10 overflow-y-auto">
-            {filteredList.map((p) => {
-              // Índice real en products (para las flechas de reordenar)
-              const realIndex = products.findIndex((prod) => prod.id === p.id)
-              return (
-                <li
-                  key={p.id}
-                  className={`flex items-center gap-3 px-3 py-3 transition-colors ${
-                    editingId === p.id
-                      ? 'bg-blue-50 dark:bg-blue-900/20'
-                      : 'hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e]'
-                  }`}
-                >
-                  {/* Flechas de reordenamiento — solo si no hay filtro activo */}
-                  {!listSearch && (
-                    <div className="flex flex-col gap-0.5 flex-shrink-0">
-                      <button
-                        onClick={() => handleMoveUp(realIndex)}
-                        disabled={realIndex === 0}
-                        title="Subir"
-                        className="p-0.5 text-[#86868b] hover:text-[#0071e3] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ArrowUpIcon className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => handleMoveDown(realIndex)}
-                        disabled={realIndex === products.length - 1}
-                        title="Bajar"
-                        className="p-0.5 text-[#86868b] hover:text-[#0071e3] disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <ArrowDownIcon className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Miniatura */}
-                  <img
-                    src={p.imagen_url}
-                    alt={p.nombre}
-                    className="w-10 h-10 rounded-lg object-cover bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0"
-                    onError={(e) => {
-                      e.target.src = `https://placehold.co/40x40/f5f5f7/86868b?text=·`
-                    }}
-                  />
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#1d1d1f] dark:text-white truncate leading-tight">
-                      {p.nombre}
-                    </p>
-                    <p className="text-xs text-[#6e6e73] dark:text-[#86868b]">
-                      {formatPrice(p.precio)}
-                      {p.destacado && (
-                        <span className="ml-2 text-[#0071e3]">★ Banner</span>
-                      )}
-                    </p>
+          <ul className="flex-1 overflow-y-auto divide-y divide-gray-50 dark:divide-white/5 pb-20 lg:pb-0">
+            {filteredProducts.map((p, idx) => (
+              <li key={p.id} className={`group flex items-center gap-4 px-4 py-5 transition-all cursor-pointer ${editingId === p.id ? 'bg-blue-50/70 dark:bg-blue-500/10' : 'hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e]'}`} onClick={() => handleEdit(p)}>
+                
+                {/* Reordenar (Solo Desktop) */}
+                {!searchQuery && (
+                  <div className="hidden lg:flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => handleMoveUp(idx)} className="p-1 hover:text-[#0071e3] text-gray-300 dark:text-gray-600">▲</button>
+                    <button onClick={() => handleMoveDown(idx)} className="p-1 hover:text-[#0071e3] text-gray-300 dark:text-gray-600">▼</button>
                   </div>
+                )}
+                
+                <div className="w-14 h-14 rounded-2xl bg-[#f5f5f7] dark:bg-[#2c2c2e] overflow-hidden flex-shrink-0 border border-gray-100 dark:border-white/5">
+                  <img src={p.imagen_url} className="w-full h-full object-cover" />
+                </div>
 
-                  {/* Acciones */}
-                  <div className="flex gap-1.5 flex-shrink-0 items-center">
-                    <button
-                      onClick={() => handleEdit(p)}
-                      title="Editar"
-                      className="text-xs font-medium text-[#0071e3] hover:underline"
-                    >
-                      Editar
-                    </button>
-                    <span className="text-gray-300 dark:text-gray-600">·</span>
-                    <button
-                      onClick={() => handleDuplicate(p)}
-                      title="Duplicar"
-                      className="text-[#86868b] hover:text-[#0071e3] transition-colors"
-                    >
-                      <DuplicateIcon className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="text-gray-300 dark:text-gray-600">·</span>
-                    <button
-                      onClick={() => handleDelete(p.id)}
-                      title="Borrar"
-                      className="text-xs font-medium text-red-500 hover:underline"
-                    >
-                      Borrar
-                    </button>
-                  </div>
-                </li>
-              )
-            })}
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[14px] font-bold text-[#1d1d1f] dark:text-white truncate tracking-tight">{p.nombre}</h4>
+                  <p className="text-[12px] font-medium text-[#86868b] flex items-center gap-2">
+                    {formatPrice(p.precio)}
+                    {p.destacado && <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase">Banner</span>}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                  <button onClick={() => handleDuplicate(p)} title="Duplicar" className="p-3 text-gray-400 hover:text-[#0071e3] transition-colors">
+                    <DuplicateIcon className="w-5 h-5" />
+                  </button>
+                  <button onClick={() => handleDelete(p.id)} title="Borrar" className="p-3 text-gray-400 hover:text-red-500 transition-colors">
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              </li>
+            ))}
           </ul>
         </div>
 
-        {/* ── Formulario ─────────────────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8" ref={formRef}>
-          <h2 className="text-base font-semibold text-[#1d1d1f] dark:text-white mb-5">
-            {editingId ? 'Editar producto' : 'Agregar producto nuevo'}
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
-
-            {/* Nombre + Categoría */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="sm:col-span-2">
-                <label className="admin-label">Nombre *</label>
-                <input
-                  className="admin-input"
-                  value={form.nombre}
-                  onChange={f('nombre')}
-                  required
-                  placeholder="AirPods Pro (2ª generación)"
-                />
-              </div>
+        {/* Formulario de Edición */}
+        <div className={`
+          flex-1 overflow-y-auto bg-[#f5f5f7] dark:bg-black p-4 sm:p-8 lg:p-12
+          ${activeView === 'form' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'}
+        `} ref={formRef}>
+          
+          <div className="max-w-3xl mx-auto w-full pb-32">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
               <div>
-                <label className="admin-label">Categoría *</label>
-                <select className="admin-input" value={form.categoria} onChange={f('categoria')}>
-                  {CATEGORIES.filter((c) => c !== 'Todos').map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
+                <h2 className="text-3xl font-black tracking-tight dark:text-white leading-none">
+                  {editingId ? 'Editar Detalles' : 'Nuevo Producto'}
+                </h2>
+                <p className="text-sm text-[#86868b] mt-2 font-medium">Completa todos los campos obligatorios (*)</p>
               </div>
-            </div>
-
-            {/* Precios */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="admin-label">Precio actual (ARS) *</label>
-                <input
-                  className="admin-input"
-                  type="number"
-                  min="0"
-                  value={form.precio}
-                  onChange={f('precio')}
-                  required
-                  placeholder="189999"
-                />
-              </div>
-              <div>
-                <label className="admin-label">Precio tachado (opcional)</label>
-                <input
-                  className="admin-input"
-                  type="number"
-                  min="0"
-                  value={form.precio_original}
-                  onChange={f('precio_original')}
-                  placeholder="219999"
-                />
-              </div>
-            </div>
-
-            {/* Tag + Compatibilidad */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="admin-label">Tag (badge de la tarjeta)</label>
-                <input
-                  className="admin-input"
-                  value={form.tag}
-                  onChange={f('tag')}
-                  placeholder="Más vendido / Novedad / Oferta"
-                />
-              </div>
-              <div>
-                <label className="admin-label">Compatible con *</label>
-                <input
-                  className="admin-input"
-                  value={form.compatible_con}
-                  onChange={f('compatible_con')}
-                  required
-                  placeholder="iPhone 15 / Mac / iPad"
-                />
-              </div>
-            </div>
-
-            {/* Imagen */}
-            <div>
-              <label className="admin-label">Imagen del producto</label>
-              <div className="flex gap-4 items-start">
-                {/* Preview */}
-                <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-[#f5f5f7] dark:bg-[#2c2c2e] flex items-center justify-center">
-                  {form.imagen_url ? (
-                    <img
-                      src={form.imagen_url}
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = 'none' }}
-                    />
-                  ) : (
-                    <span className="text-3xl">📷</span>
-                  )}
-                </div>
-
-                <div className="flex-1 space-y-2">
-                  {/* Upload desde dispositivo */}
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current.click()}
-                    disabled={imageProcessing}
-                    className="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-[#0071e3] rounded-xl px-4 py-3 text-sm text-[#6e6e73] dark:text-[#86868b] hover:text-[#0071e3] transition-colors text-center disabled:opacity-50"
-                  >
-                    {imageProcessing ? '⏳ Procesando imagen...' : '📁 Subir desde dispositivo'}
-                  </button>
-                  <p className="text-xs text-[#86868b] text-center">— o —</p>
-                  {/* URL */}
-                  <input
-                    className="admin-input text-xs"
-                    value={form.imagen_url.startsWith('data:') ? '' : form.imagen_url}
-                    onChange={f('imagen_url')}
-                    placeholder="Pegar URL de imagen (ej: https://imgbb.com/...)"
-                  />
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageFile}
-                  />
-                  <p className="text-[10px] text-[#86868b]">
-                    Tip: para URLs, subí la foto gratis en{' '}
-                    <a href="https://imgbb.com" target="_blank" rel="noreferrer" className="text-[#0071e3] underline">
-                      imgbb.com
-                    </a>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Descripción técnica */}
-            <div>
-              <label className="admin-label">Descripción técnica *</label>
-              <textarea
-                className="admin-input resize-none"
-                rows={3}
-                value={form.descripcion}
-                onChange={f('descripcion')}
-                required
-                placeholder="Chip H2, cancelación activa de ruido, hasta 30h de batería..."
-              />
-            </div>
-
-            {/* Por qué lo necesitás */}
-            <div>
-              <label className="admin-label">Por qué lo necesitás *</label>
-              <textarea
-                className="admin-input resize-none"
-                rows={3}
-                value={form.por_que_lo_necesitas}
-                onChange={f('por_que_lo_necesitas')}
-                required
-                placeholder="Texto aspiracional que convenza al comprador. Sin frases genéricas."
-              />
-            </div>
-
-            {/* Destacado */}
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={form.destacado}
-                onChange={(e) => setForm((prev) => ({ ...prev, destacado: e.target.checked }))}
-                className="w-4 h-4 accent-[#0071e3] flex-shrink-0"
-              />
-              <span className="text-sm text-[#1d1d1f] dark:text-[#e5e5ea]">
-                Mostrar como producto destacado en el banner principal
-                <span className="text-xs text-[#6e6e73] dark:text-[#86868b] ml-1">(solo uno a la vez)</span>
-              </span>
-            </label>
-
-            {/* Acciones */}
-            <div className="flex items-center gap-3 pt-2 flex-wrap">
-              <button
-                type="submit"
-                className="bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white font-medium px-6 py-2.5 rounded-full text-sm transition-all"
-              >
-                {editingId ? 'Guardar cambios' : 'Agregar producto'}
-              </button>
-              {editingId && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handleDuplicate(products.find(p => p.id === editingId))}
-                    className="flex items-center gap-1.5 text-sm text-[#6e6e73] dark:text-[#86868b] hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
-                  >
-                    <DuplicateIcon className="w-4 h-4" />
-                    Duplicar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleNew}
-                    className="text-sm text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
-                  >
-                    Cancelar edición
-                  </button>
-                </>
+              {activeView === 'form' && (
+                <button onClick={() => setActiveView('list')} className="lg:hidden self-start text-xs font-black uppercase tracking-widest text-[#0071e3] bg-blue-50 dark:bg-blue-500/10 px-4 py-2 rounded-full">
+                  ← Volver a la lista
+                </button>
               )}
             </div>
-          </form>
+
+            <form onSubmit={handleSubmit} className="space-y-8">
+              
+              {/* Bloque: Información Básica */}
+              <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="admin-label">Nombre del Producto *</label>
+                    <input className="admin-input" value={form.nombre} onChange={f('nombre')} required placeholder="Ej: iPhone 15 Pro Max" />
+                  </div>
+                  <div>
+                    <label className="admin-label">Categoría *</label>
+                    <select className="admin-input appearance-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1rem' }} value={form.categoria} onChange={f('categoria')}>
+                      {CATEGORIES.filter(c => c !== 'Todos').map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="admin-label">Compatible con *</label>
+                    <input className="admin-input" value={form.compatible_con} onChange={f('compatible_con')} required placeholder="Ej: iPhone 12 en adelante" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloque: Precios y Oferta */}
+              <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm space-y-6 border-2 border-blue-50 dark:border-blue-500/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-1 px-4 bg-blue-50 dark:bg-blue-500/10 text-[10px] font-black text-[#0071e3] uppercase tracking-widest rounded-bl-xl">Finanzas</div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-black uppercase text-[#86868b] tracking-tighter">Precios y Promociones</h3>
+                  {form.precio && form.precio_original && Number(form.precio_original) > Number(form.precio) && (
+                    <span className="text-[10px] font-black bg-red-500 text-white px-3 py-1.5 rounded-full shadow-lg shadow-red-500/20">
+                      -{Math.round((1 - Number(form.precio) / Number(form.precio_original)) * 100)}% DESCUENTO
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="admin-label">Precio de Venta (ARS) *</label>
+                    <div className="relative">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                       <input type="number" className="admin-input pl-10" value={form.precio} onChange={f('precio')} required placeholder="0" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="admin-label">Precio Original (Tachado)</label>
+                    <div className="relative">
+                       <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                       <input type="number" className="admin-input pl-10" value={form.precio_original} onChange={f('precio_original')} placeholder="Escribir solo si está de oferta" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bloque: Etiquetas y Banner */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm">
+                  <label className="admin-label">Etiqueta Visual (Badge)</label>
+                  <input className="admin-input" value={form.tag} onChange={f('tag')} placeholder="Ej: PRODUCTO TOP" />
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {['OFERTA', 'Novedad', 'Limitado', 'Top'].map(t => (
+                      <button key={t} type="button" onClick={() => setForm(p => ({...p, tag: t}))} className="text-[10px] font-black px-4 py-2 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-full dark:text-white hover:bg-[#0071e3] hover:text-white transition-all uppercase tracking-widest border border-transparent">+{t}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm flex items-center justify-between gap-6">
+                  <div className="flex-1">
+                    <p className="text-sm font-black text-[#1d1d1f] dark:text-white uppercase tracking-tight">Destacar Producto</p>
+                    <p className="text-[11px] text-[#86868b] font-medium leading-relaxed mt-1">Aparecerá en el banner principal al inicio.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" checked={form.destacado} onChange={(e) => setForm(p => ({...p, destacado: e.target.checked}))} className="sr-only peer" />
+                    <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:bg-[#0071e3] peer-checked:after:translate-x-6 after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all shadow-inner"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Bloque: Contenido */}
+              <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm space-y-6">
+                <div>
+                  <label className="admin-label">Descripción para Grilla (Técnica) *</label>
+                  <textarea rows={2} className="admin-input resize-none py-4" value={form.descripcion} onChange={f('descripcion')} required placeholder="Detalles cortos que se ven en la tarjeta..." />
+                </div>
+                <div>
+                  <label className="admin-label">Descripción para Detalle (Venta) *</label>
+                  <textarea rows={4} className="admin-input resize-none py-4" value={form.por_que_lo_necesitas} onChange={f('por_que_lo_necesitas')} required placeholder="Texto persuasivo para convencer al cliente..." />
+                </div>
+              </div>
+
+              {/* Bloque: Imagen */}
+              <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm">
+                <label className="admin-label mb-6 block">Imagen del Producto *</label>
+                <div className="flex flex-col md:flex-row gap-8 items-center">
+                  <div className="w-48 h-48 bg-[#fbfbfd] dark:bg-[#2c2c2e] rounded-[24px] flex items-center justify-center border-2 border-dashed border-gray-100 dark:border-white/5 overflow-hidden group relative">
+                    {form.imagen_url ? (
+                      <>
+                        <img src={form.imagen_url} className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button type="button" onClick={() => setForm(p => ({...p, imagen_url: ''}))} className="bg-white text-black text-[10px] font-black px-3 py-1.5 rounded-full shadow-xl">QUITAR</button>
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-5xl opacity-20">📷</span>
+                    )}
+                  </div>
+                  <div className="flex-1 w-full space-y-4">
+                    <button type="button" onClick={() => fileRef.current.click()} disabled={imageProcessing} className="w-full bg-[#0071e3] text-white py-5 rounded-[20px] text-sm font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                      {imageProcessing ? 'PROCESANDO...' : 'ELEGIR DESDE GALERÍA'}
+                    </button>
+                    <div className="flex items-center gap-3">
+                      <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">o pega un link</span>
+                      <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                    </div>
+                    <input type="text" className="admin-input text-sm py-4" value={form.imagen_url.startsWith('data:') ? '' : form.imagen_url} onChange={f('imagen_url')} placeholder="https://ejemplo.com/imagen.jpg" />
+                    <p className="text-[10px] text-[#86868b] font-medium text-center italic">Tip: recomendamos imágenes con fondo blanco o transparente.</p>
+                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Botón Guardar (Flotante en móvil) */}
+              <div className="fixed bottom-0 left-0 right-0 p-5 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-100 dark:border-white/10 lg:relative lg:bg-transparent lg:border-0 lg:p-0 lg:pt-8 z-30">
+                <div className="flex flex-col sm:flex-row items-center gap-4 max-w-3xl mx-auto">
+                  <button type="submit" className="w-full sm:flex-1 bg-black dark:bg-white dark:text-black text-white py-5 rounded-[24px] font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-all text-sm">
+                    {editingId ? 'ACTUALIZAR PRODUCTO' : 'PUBLICAR EN CATÁLOGO'}
+                  </button>
+                  {editingId && (
+                    <button type="button" onClick={() => setActiveView('list')} className="w-full sm:w-auto text-xs font-black uppercase tracking-widest text-[#86868b] px-8 py-5">
+                      CANCELAR
+                    </button>
+                  )}
+                </div>
+              </div>
+
+            </form>
+          </div>
         </div>
       </div>
     </div>
