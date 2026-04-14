@@ -45,6 +45,11 @@ export default function App() {
         p.descripcion.toLowerCase().includes(q) ||
         p.compatible_con.toLowerCase().includes(q) ||
         p.categoria.toLowerCase().includes(q)
+
+      // Si es la vista 'Todos' y no hay búsqueda, ocultamos el destacado de la grilla
+      // para que no aparezca duplicado (ya que está en el Hero)
+      if (selectedCategory === 'Todos' && !q && p.destacado) return false
+
       return matchesCategory && matchesSearch
     })
   }, [products, selectedCategory, searchQuery])
@@ -75,7 +80,7 @@ export default function App() {
       />
 
       <main>
-        {!searchQuery && (
+        {!searchQuery && selectedCategory === 'Todos' && (
           <HeroSection product={heroProduct} onOpen={setSelectedProduct} />
         )}
         <ProductGrid
