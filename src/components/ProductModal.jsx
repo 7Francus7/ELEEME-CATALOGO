@@ -110,7 +110,7 @@ export default function ProductModal({ product, onClose }) {
                 <p className="text-2xl font-semibold text-[#1d1d1f] dark:text-white">
                   {formatPrice(product.precio)}
                 </p>
-                {product.precio_original && (
+                {product.precio_original && !product.ocultar_descuento_nro && (
                   <p className="text-sm text-[#6e6e73] dark:text-[#86868b] line-through">
                     {formatPrice(product.precio_original)}
                   </p>

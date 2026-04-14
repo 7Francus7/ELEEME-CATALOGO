@@ -44,7 +44,7 @@ export default function HeroSection({ product, onOpen }) {
                   {product.tag}
                 </span>
               )}
-              {discount && (
+              {discount && !product.ocultar_descuento_porcentaje && (
                 <span className="text-xs font-bold bg-red-500 text-white px-2 py-0.5 rounded-full">
                   OFERTA
                 </span>
@@ -64,9 +64,9 @@ export default function HeroSection({ product, onOpen }) {
                 <span className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
                   {formatPrice(product.precio)}
                 </span>
-                {product.precio_original && (
+                {product.precio_original && !product.ocultar_descuento_nro && (
                   <span className="text-[#6e6e73] line-through text-sm sm:text-base">
-                    {formatPrice(product.precio_original)} (−{discount}%)
+                    {formatPrice(product.precio_original)} {!product.ocultar_descuento_porcentaje && `(−${discount}%)`}
                   </span>
                 )}
               </div>

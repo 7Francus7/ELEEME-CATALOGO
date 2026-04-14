@@ -34,7 +34,7 @@ export default function ProductCard({ product, onOpen }) {
         )}
 
         {/* Badge de descuento */}
-        {discount && (
+        {discount && !product.ocultar_descuento_porcentaje && (
           <span className="absolute bottom-3 left-3 text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full shadow-sm">
             −{discount}%
           </span>
@@ -60,7 +60,7 @@ export default function ProductCard({ product, onOpen }) {
             <span className="font-bold text-[#1d1d1f] dark:text-white text-base sm:text-lg tracking-tight">
               {formatPrice(product.precio)}
             </span>
-            {product.precio_original && (
+            {product.precio_original && !product.ocultar_descuento_nro && (
               <span className="text-[11px] text-[#86868b] line-through decoration-red-500/30">
                 {formatPrice(product.precio_original)}
               </span>

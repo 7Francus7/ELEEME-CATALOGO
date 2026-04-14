@@ -16,6 +16,8 @@ const EMPTY_FORM = {
   descripcion: '',
   por_que_lo_necesitas: '',
   destacado: false,
+  ocultar_descuento_nro: false,
+  ocultar_descuento_porcentaje: false,
 }
 
 // Redimensiona la imagen a máx 800px y la convierte a JPEG 82% antes de guardar
@@ -175,6 +177,14 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
 
     if (form.destacado) {
       updated = updated.map((p) => ({ ...p, destacado: p.id === targetId }))
+    }
+
+    // Asegurar que los nuevos campos booleanos se guarden correctamente
+    if (editingId) {
+      updated = updated.map(p => p.id === editingId ? { ...p, ...form, precio, precio_original } : p)
+    } else {
+      const newId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1
+      updated = [...products, { ...form, id: newId, precio, precio_original }]
     }
 
     try {
@@ -383,6 +393,28 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                        <input type="number" className="admin-input pl-10" value={form.precio_original} onChange={f('precio_original')} placeholder="Escribir solo si está de oferta" />
                     </div>
                   </div>
+                </div>
+
+                {/* Toggles de Oferta */}
+                <div className="pt-4 border-t border-gray-100 dark:border-white/5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={form.ocultar_descuento_nro} 
+                      onChange={e => setForm(p => ({...p, ocultar_descuento_nro: e.target.checked}))}
+                      className="w-4 h-4 rounded border-gray-300 text-[#0071e3] transition-all"
+                    />
+                    <span className="text-xs font-medium text-[#6e6e73] dark:text-[#86868b]">Ocultar precio tachado</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      checked={form.ocultar_descuento_porcentaje} 
+                      onChange={e => setForm(p => ({...p, ocultar_descuento_porcentaje: e.target.checked}))}
+                      className="w-4 h-4 rounded border-gray-300 text-[#0071e3] transition-all"
+                    />
+                    <span className="text-xs font-medium text-[#6e6e73] dark:text-[#86868b]">Ocultar burbuja de %</span>
+                  </label>
                 </div>
               </div>
 
