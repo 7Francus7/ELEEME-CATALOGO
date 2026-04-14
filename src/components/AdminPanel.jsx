@@ -252,7 +252,7 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       </header>
 
       {/* Selector de Vista (Solo Móvil) */}
-      <div className="lg:hidden flex bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 sticky top-0 z-10">
+      <div className="lg:hidden flex bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 sticky top-0 z-10 flex-shrink-0">
         <button 
           onClick={() => setActiveView('list')}
           className={`flex-1 py-4 text-xs font-black uppercase tracking-widest transition-all ${activeView === 'list' ? 'text-[#0071e3] border-b-2 border-[#0071e3]' : 'text-[#86868b]'}`}
@@ -267,14 +267,14 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
         </button>
       </div>
 
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row relative">
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row relative overflow-hidden">
         
         {/* Lista Lateral */}
         <div className={`
-          flex-1 lg:w-[420px] lg:flex-none border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e] flex flex-col
+          flex-1 min-h-0 lg:w-[420px] lg:flex-none border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e] flex flex-col
           ${activeView === 'list' ? 'flex' : 'hidden lg:flex'}
         `}>
-          <div className="p-4 border-b border-gray-50 dark:border-white/5">
+          <div className="p-4 border-b border-gray-50 dark:border-white/5 flex-shrink-0">
             <div className="relative group">
               <input
                 type="text"
@@ -287,46 +287,48 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
             </div>
           </div>
 
-          <ul className="flex-1 overflow-y-auto divide-y divide-gray-50 dark:divide-white/5 pb-20 lg:pb-0">
-            {filteredProducts.map((p, idx) => (
-              <li key={p.id} className={`group flex items-center gap-4 px-4 py-5 transition-all cursor-pointer ${editingId === p.id ? 'bg-blue-50/70 dark:bg-blue-500/10' : 'hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e]'}`} onClick={() => handleEdit(p)}>
-                
-                {/* Reordenar (Solo Desktop) */}
-                {!searchQuery && (
-                  <div className="hidden lg:flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => handleMoveUp(idx)} className="p-1 hover:text-[#0071e3] text-gray-300 dark:text-gray-600">▲</button>
-                    <button onClick={() => handleMoveDown(idx)} className="p-1 hover:text-[#0071e3] text-gray-300 dark:text-gray-600">▼</button>
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            <ul className="divide-y divide-gray-50 dark:divide-white/5 pb-32">
+              {filteredProducts.map((p, idx) => (
+                <li key={p.id} className={`group flex items-center gap-4 px-4 py-5 transition-all cursor-pointer ${editingId === p.id ? 'bg-blue-50/70 dark:bg-blue-500/10' : 'hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e]'}`} onClick={() => handleEdit(p)}>
+                  
+                  {/* Reordenar (Solo Desktop) */}
+                  {!searchQuery && (
+                    <div className="hidden lg:flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                      <button onClick={() => handleMoveUp(idx)} className="p-1 hover:text-[#0071e3] text-gray-300 dark:text-gray-600">▲</button>
+                      <button onClick={() => handleMoveDown(idx)} className="p-1 hover:text-[#0071e3] text-gray-300 dark:text-gray-600">▼</button>
+                    </div>
+                  )}
+                  
+                  <div className="w-14 h-14 rounded-2xl bg-[#f5f5f7] dark:bg-[#2c2c2e] overflow-hidden flex-shrink-0 border border-gray-100 dark:border-white/5">
+                    <img src={p.imagen_url} className="w-full h-full object-cover" />
                   </div>
-                )}
-                
-                <div className="w-14 h-14 rounded-2xl bg-[#f5f5f7] dark:bg-[#2c2c2e] overflow-hidden flex-shrink-0 border border-gray-100 dark:border-white/5">
-                  <img src={p.imagen_url} className="w-full h-full object-cover" />
-                </div>
 
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-[14px] font-bold text-[#1d1d1f] dark:text-white truncate tracking-tight">{p.nombre}</h4>
-                  <p className="text-[12px] font-medium text-[#86868b] flex items-center gap-2">
-                    {formatPrice(p.precio)}
-                    {p.destacado && <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase">Banner</span>}
-                  </p>
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[14px] font-bold text-[#1d1d1f] dark:text-white truncate tracking-tight">{p.nombre}</h4>
+                    <p className="text-[12px] font-medium text-[#86868b] flex items-center gap-2">
+                      {formatPrice(p.precio)}
+                      {p.destacado && <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase">Banner</span>}
+                    </p>
+                  </div>
 
-                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                  <button onClick={() => handleDuplicate(p)} title="Duplicar" className="p-3 text-gray-400 hover:text-[#0071e3] transition-colors">
-                    <DuplicateIcon className="w-5 h-5" />
-                  </button>
-                  <button onClick={() => handleDelete(p.id)} title="Borrar" className="p-3 text-gray-400 hover:text-red-500 transition-colors">
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
+                  <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => handleDuplicate(p)} title="Duplicar" className="p-3 text-gray-400 hover:text-[#0071e3] transition-colors">
+                      <DuplicateIcon className="w-5 h-5" />
+                    </button>
+                    <button onClick={() => handleDelete(p.id)} title="Borrar" className="p-3 text-gray-400 hover:text-red-500 transition-colors">
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Formulario de Edición */}
         <div className={`
-          flex-1 overflow-y-auto bg-[#f5f5f7] dark:bg-black p-4 sm:p-8 lg:p-12
+          flex-1 overflow-y-auto overscroll-contain bg-[#f5f5f7] dark:bg-black p-4 sm:p-8 lg:p-12
           ${activeView === 'form' ? 'flex flex-col' : 'hidden lg:flex lg:flex-col'}
         `} ref={formRef}>
           
