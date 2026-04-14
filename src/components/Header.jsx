@@ -1,0 +1,101 @@
+import { useState } from 'react'
+import { SearchIcon, XIcon, SunIcon, MoonIcon } from './Icons'
+
+export default function Header({
+  categories,
+  selectedCategory,
+  onCategoryChange,
+  searchQuery,
+  onSearchChange,
+  isDark,
+  onToggleDark,
+}) {
+  const [searchOpen, setSearchOpen] = useState(false)
+
+  const handleCloseSearch = () => {
+    setSearchOpen(false)
+    onSearchChange('')
+  }
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Fila principal */}
+        <div className="flex items-center h-14 gap-3">
+
+          {/* Logo ELEEME */}
+          {!searchOpen && (
+            <a href="#" className="flex-shrink-0 select-none">
+              <span
+                className="text-[#1d1d1f] dark:text-white"
+                style={{ fontWeight: 900, fontSize: '17px', letterSpacing: '-0.04em' }}
+              >
+                ELEEME
+              </span>
+            </a>
+          )}
+
+          {/* Buscador expandible */}
+          <div className={`flex items-center transition-all duration-300 ${searchOpen ? 'flex-1' : 'ml-auto'}`}>
+            {searchOpen ? (
+              <div className="flex-1 flex items-center gap-2 bg-[#f5f5f7] dark:bg-[#1c1c1e] rounded-full px-4 py-2">
+                <SearchIcon className="w-4 h-4 text-[#86868b] flex-shrink-0" />
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="flex-1 bg-transparent text-sm text-[#1d1d1f] dark:text-white placeholder-[#86868b] outline-none"
+                />
+                <button
+                  onClick={handleCloseSearch}
+                  className="flex-shrink-0 text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
+                >
+                  <XIcon className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setSearchOpen(true)}
+                  className="p-2 text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
+                  aria-label="Buscar"
+                >
+                  <SearchIcon className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={onToggleDark}
+                  className="p-2 text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
+                  aria-label="Cambiar tema"
+                >
+                  {isDark ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Pills de categorías */}
+        {!searchOpen && (
+          <div className="flex gap-2 pb-3 overflow-x-auto scrollbar-hide">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => onCategoryChange(cat)}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  selectedCategory === cat
+                    ? 'bg-[#1d1d1f] dark:bg-white text-white dark:text-black'
+                    : 'bg-[#f5f5f7] dark:bg-[#1c1c1e] text-[#6e6e73] dark:text-[#86868b] hover:bg-gray-200 dark:hover:bg-[#2c2c2e]'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </header>
+  )
+}
