@@ -83,13 +83,15 @@ export default function App() {
         {!searchQuery && selectedCategory === 'Todos' && (
           <HeroSection product={heroProduct} onOpen={setSelectedProduct} />
         )}
-        <ProductGrid
-          products={filteredProducts}
-          onOpen={setSelectedProduct}
-          searchQuery={searchQuery}
-          selectedCategory={selectedCategory}
-          onClearSearch={() => { setSearchQuery(''); setSelectedCategory('Todos') }}
-        />
+        <div className={(!searchQuery && selectedCategory === 'Todos') ? '' : 'pt-28 sm:pt-32'}>
+          <ProductGrid
+            products={filteredProducts}
+            onOpen={setSelectedProduct}
+            searchQuery={searchQuery}
+            selectedCategory={selectedCategory}
+            onClearSearch={() => { setSearchQuery(''); setSelectedCategory('Todos') }}
+          />
+        </div>
       </main>
 
       <Footer onAdminOpen={() => setAdminOpen(true)} />
