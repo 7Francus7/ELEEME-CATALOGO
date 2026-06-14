@@ -5,6 +5,9 @@ export default function Header({
   categories,
   selectedCategory,
   onCategoryChange,
+  models = [],
+  selectedModel,
+  onModelChange,
   searchQuery,
   onSearchChange,
   isDark,
@@ -91,6 +94,38 @@ export default function Header({
                 }`}
               >
                 {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Filtro por modelo de iPhone (solo Fundas / Protectores) */}
+        {!searchOpen && models.length > 0 && (
+          <div className="flex items-center gap-2 pb-3 overflow-x-auto scrollbar-hide animate-slide-down">
+            <span className="flex-shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[#86868b] pr-1">
+              Modelo
+            </span>
+            <button
+              onClick={() => onModelChange('Todos')}
+              className={`flex-shrink-0 px-3.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
+                selectedModel === 'Todos'
+                  ? 'bg-[#0071e3] border-[#0071e3] text-white'
+                  : 'bg-transparent border-gray-200 dark:border-white/10 text-[#6e6e73] dark:text-[#86868b] hover:border-[#0071e3]'
+              }`}
+            >
+              Todos
+            </button>
+            {models.map((model) => (
+              <button
+                key={model}
+                onClick={() => onModelChange(model)}
+                className={`flex-shrink-0 px-3.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
+                  selectedModel === model
+                    ? 'bg-[#0071e3] border-[#0071e3] text-white'
+                    : 'bg-transparent border-gray-200 dark:border-white/10 text-[#6e6e73] dark:text-[#86868b] hover:border-[#0071e3]'
+                }`}
+              >
+                {model}
               </button>
             ))}
           </div>

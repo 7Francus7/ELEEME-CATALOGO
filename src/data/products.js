@@ -2,7 +2,29 @@
 export const WHATSAPP_NUMBER = '542644056880'
 export const INSTAGRAM_URL = 'https://www.instagram.com/eleeme.st.acc/'
 
-export const CATEGORIES = ['Todos', 'iPhone', 'Mac', 'Watch', 'Audio', 'Otros']
+// Categorías principales del catálogo (la primera, 'Todos', es la vista inicial)
+export const CATEGORIES = ['Todos', 'Fundas', 'Protectores de cámara', 'Cargadores', 'Accesorios']
+
+// Categorías donde tiene sentido filtrar por modelo de iPhone
+export const MODEL_CATEGORIES = ['Fundas', 'Protectores de cámara']
+
+// Modelos de iPhone disponibles (orden de más nuevo a más antiguo).
+// El filtro del header solo muestra los modelos que realmente existen en el catálogo.
+export const MODELS = [
+  'iPhone 16 Pro Max',
+  'iPhone 16 Pro',
+  'iPhone 16',
+  'iPhone 15 Pro Max',
+  'iPhone 15 Pro',
+  'iPhone 15',
+  'iPhone 14 Pro Max',
+  'iPhone 14 Pro',
+  'iPhone 14',
+  'iPhone 13 Pro Max',
+  'iPhone 13 Pro',
+  'iPhone 13',
+  'iPhone 12',
+]
 
 // ─── HELPER DE PRECIO ─────────────────────────────────────────────────────────
 export const formatPrice = (price) =>
@@ -12,138 +34,221 @@ export const formatPrice = (price) =>
     maximumFractionDigits: 0,
   }).format(price)
 
+// Devuelve los modelos presentes en una lista de productos, ordenados según MODELS
+export const availableModelsFor = (productList) => {
+  const set = new Set()
+  productList.forEach((p) => (p.modelos || []).forEach((m) => set.add(m)))
+  return MODELS.filter((m) => set.has(m))
+}
+
 // ─── CATÁLOGO DE PRODUCTOS ────────────────────────────────────────────────────
 // Campos:
+//   categoria → una de CATEGORIES (sin 'Todos')
+//   modelos → array de modelos compatibles; habilita el filtro por modelo (solo Fundas / Protectores)
+//   compatible_con → texto legible que se muestra en la card y el modal
 //   imagen_url → reemplazar con fotos reales del cliente
-//   compatible_con → se muestra en la card y en el modal
-//   por_que_lo_necesitas → texto aspiracional en el modal (evitar frases genéricas)
 export const products = [
   {
     id: 1,
-    nombre: 'AirPods Pro (2ª generación)',
-    categoria: 'Audio',
-    precio: 189999,
-    precio_original: 219999,
+    nombre: 'Funda Metal Color Blanco',
+    categoria: 'Fundas',
+    precio: 16999,
+    precio_original: 21999,
+    modelos: ['iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 14 Pro Max', 'iPhone 14 Pro', 'iPhone 13 Pro'],
     descripcion:
-      'Chip H2 con cancelación activa de ruido una generación más arriba. Modo Transparencia adaptativa que ajusta el entorno en tiempo real. Audio espacial personalizado con seguimiento dinámico de cabeza. Hasta 30 h de batería total con el estuche MagSafe cargable por USB-C.',
+      'Marco de aluminio anodizado con espalda de policarbonato blanco mate. Botones metálicos de respuesta firme. Bordes elevados que protegen pantalla y cámara. Compatible con MagSafe.',
     por_que_lo_necesitas:
-      'El ANC de segunda generación corta frecuencias bajas que otros auriculares no alcanzan. A los cinco minutos, olvidás que los tenés puestos. El precio bajó; la calidad, no.',
+      'Un acabado premium que se siente sólido en la mano y mantiene el iPhone como nuevo. El blanco mate no se mancha ni amarillea con el uso.',
     imagen_url:
-      'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'iPhone 12 o posterior · Mac · iPad · Apple Watch',
+      'https://images.unsplash.com/photo-1601593346740-925612772716?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 13 Pro a 15 Pro Max',
     destacado: true,
     tag: 'Más vendido',
   },
   {
     id: 2,
-    nombre: 'Cable MagSafe 2 m',
-    categoria: 'iPhone',
-    precio: 29999,
+    nombre: 'Funda Transparente Reforzada',
+    categoria: 'Fundas',
+    precio: 12999,
     precio_original: null,
+    modelos: [
+      'iPhone 16 Pro Max', 'iPhone 16 Pro', 'iPhone 16',
+      'iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 15',
+      'iPhone 14 Pro Max', 'iPhone 14', 'iPhone 13',
+    ],
     descripcion:
-      'Carga magnética certificada MFi hasta 15 W. Imán de precisión que se alinea solo al acercarse al iPhone. Sin calor excesivo ni micro-daño por ciclos repetidos. Trenzado de nylon resistente a dobleces, con conector USB-C en el otro extremo.',
+      'Policarbonato cristalino con marco de TPU flexible y esquinas reforzadas. Tratamiento anti-UV que evita el amarilleo. Borde de cámara elevado 1,5 mm.',
     por_que_lo_necesitas:
-      'El cable incluido en caja entrega 5 W. Este entrega el triple. La diferencia en tu rutina de noche: carga completa antes de dormirte, sin apuros a la mañana.',
+      'Protege sin esconder el diseño del iPhone. Las esquinas reforzadas absorben los golpes de las caídas más comunes.',
     imagen_url:
-      'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'iPhone 12 / 13 / 14 / 15 series · MagSafe Battery Pack',
+      'https://images.unsplash.com/photo-1574755393849-623942496936?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 13 a 16 Pro Max',
     destacado: false,
-    tag: 'Original Apple',
+    tag: 'Anti-amarilleo',
   },
   {
     id: 3,
-    nombre: 'Apple Watch Series 9 GPS 45 mm',
-    categoria: 'Watch',
-    precio: 349999,
-    precio_original: 389999,
+    nombre: 'Funda Antigolpes Negra',
+    categoria: 'Fundas',
+    precio: 14999,
+    precio_original: 18999,
+    modelos: [
+      'iPhone 15 Pro Max', 'iPhone 15', 'iPhone 14 Pro Max',
+      'iPhone 14', 'iPhone 13 Pro Max', 'iPhone 13', 'iPhone 12',
+    ],
     descripcion:
-      'Chip S9 SiP de doble núcleo. Pantalla Always-On Retina de 2000 nits, visible bajo sol directo. ECG, oxímetro de sangre y sensor de temperatura de muñeca. Gesto de doble toque para responder llamadas sin tocar la pantalla.',
+      'Doble capa: TPU absorbente por dentro y policarbonato rígido por fuera. Esquinas con cámaras de aire (grado militar). Textura antideslizante.',
     por_que_lo_necesitas:
-      'No es un reloj inteligente más. Es el dispositivo de salud más preciso que podés usar las 24 h sin ir a un laboratorio. Cada dato que registra es tuyo, en tiempo real.',
+      'La máxima protección para quienes se les cae el teléfono seguido. Pasa la prueba de caída desde 2 metros sin que el iPhone sufra.',
     imagen_url:
-      'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'iPhone XS o posterior con iOS 17',
+      'https://images.unsplash.com/photo-1592890288564-76628a30a657?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 12 a 15 Pro Max',
     destacado: false,
-    tag: 'Salud & Bienestar',
+    tag: 'Grado militar',
   },
   {
     id: 4,
-    nombre: 'Funda Spigen Ultra Hybrid MagSafe',
-    categoria: 'iPhone',
-    precio: 18999,
+    nombre: 'Funda Silicona MagSafe',
+    categoria: 'Fundas',
+    precio: 15999,
     precio_original: null,
+    modelos: [
+      'iPhone 16 Pro', 'iPhone 16', 'iPhone 15 Pro Max',
+      'iPhone 15', 'iPhone 14 Pro', 'iPhone 14',
+    ],
     descripcion:
-      'Policarbonato transparente con marco TPU de alta resistencia al impacto. Imán MagSafe integrado de potencia certificada. Borde de cámara elevado 1,5 mm. Tratamiento anti-UV: no amarilla con el tiempo.',
+      'Silicona suave al tacto con interior de microfibra. Imán MagSafe integrado de potencia certificada. Disponible en varios colores. Botones recubiertos.',
     por_que_lo_necesitas:
-      'Protege sin ocultar. El diseño del iPhone 15 Pro es parte del producto; esta funda lo exhibe y lo cuida al mismo tiempo. Compatible con todos los accesorios MagSafe del ecosistema.',
+      'El tacto sedoso de la silicona original con el agarre perfecto del MagSafe. Se conecta solo a cargadores y accesorios magnéticos.',
     imagen_url:
-      'https://images.unsplash.com/photo-1574755393849-623942496936?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'iPhone 15 Pro · Accesorios MagSafe universales',
+      'https://images.unsplash.com/photo-1556656793-08538906a9f8?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 14 a 16 Pro',
     destacado: false,
-    tag: 'Protección premium',
+    tag: 'MagSafe',
   },
   {
     id: 5,
-    nombre: 'Belkin MagSafe 3 en 1 Stand',
-    categoria: 'Otros',
-    precio: 89999,
-    precio_original: 109999,
+    nombre: 'Protector de Cámara Vidrio Templado',
+    categoria: 'Protectores de cámara',
+    precio: 6999,
+    precio_original: 8999,
+    modelos: [
+      'iPhone 16 Pro Max', 'iPhone 16 Pro', 'iPhone 15 Pro Max',
+      'iPhone 15 Pro', 'iPhone 14 Pro Max', 'iPhone 14 Pro',
+    ],
     descripcion:
-      'Carga simultánea de iPhone (15 W MagSafe), Apple Watch (5 W Fast Charge) y AirPods (5 W). Brazo ajustable para modo horizontal (StandBy iOS 17) o vertical. Cable USB-C trenzado. Cargador de pared 30 W incluido.',
+      'Vidrio templado 9H individual para cada lente, con marco de aluminio. No interfiere con el flash ni el modo nocturno. Instalación con guía de alineación.',
     por_que_lo_necesitas:
-      'Un cable enredado en el velador no es una solución, es resignación. Este stand convierte tu mesa de luz en una estación de carga ordenada. Sin buscar cables a las 7 AM.',
+      'El lente es lo más caro de reparar del iPhone. Por una fracción del costo lo dejás blindado contra rayones y golpes.',
     imagen_url:
-      'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'iPhone 12 o posterior · Apple Watch Series 4+ · AirPods Pro 2 / AirPods 3',
+      'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 14 Pro a 16 Pro Max',
     destacado: false,
-    tag: 'Todo en uno',
+    tag: 'Vidrio 9H',
   },
   {
     id: 6,
-    nombre: 'Hub USB-C 7 en 1 Anker 551',
-    categoria: 'Mac',
-    precio: 54999,
+    nombre: 'Protector de Cámara Metálico',
+    categoria: 'Protectores de cámara',
+    precio: 7999,
     precio_original: null,
+    modelos: [
+      'iPhone 16 Pro Max', 'iPhone 15 Pro Max', 'iPhone 15',
+      'iPhone 14 Pro Max', 'iPhone 14', 'iPhone 13',
+    ],
     descripcion:
-      'HDMI 4K 60 Hz. USB-A 3.0 × 2. USB-C datos 5 Gbps. Lectores SD y microSD simultáneos. Pass-through USB-C 100 W. Carcasa de aluminio anodizado al tono del MacBook. Sin driver, plug & play en cualquier sistema operativo.',
+      'Anillo de aleación de aluminio que rodea todo el módulo de cámara. Resiste caídas y golpes laterales. Disponible en negro, plata y dorado.',
     por_que_lo_necesitas:
-      'El MacBook tiene dos puertos. El mundo tiene diez periféricos. Este hub cierra la brecha sin comprometer la estética del escritorio ni calentar la laptop.',
+      'Protección estructural del módulo completo, no solo del vidrio. Suma un detalle de color que combina con la funda.',
     imagen_url:
-      'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'MacBook Pro 2019+ · MacBook Air M1/M2/M3 · iPad Pro con USB-C',
+      'https://images.unsplash.com/photo-1592434134753-a70baf7979d5?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 13 a 16 Pro Max',
     destacado: false,
-    tag: 'Productividad',
+    tag: 'Aluminio',
   },
   {
     id: 7,
-    nombre: 'Magic Keyboard con Touch ID',
-    categoria: 'Mac',
-    precio: 94999,
-    precio_original: null,
+    nombre: 'Cargador MagSafe 15W',
+    categoria: 'Cargadores',
+    precio: 24999,
+    precio_original: 29999,
+    modelos: [],
     descripcion:
-      'Mecanismo de teclas de tijera silencioso con recorrido preciso. Touch ID para desbloqueo instantáneo y pago con Apple Pay. Batería de un mes con uso diario. Conexión USB-C cableada o Bluetooth estable hasta 10 m.',
+      'Carga magnética inalámbrica de hasta 15 W. Alineación automática por imanes. Cable USB-C trenzado de 1 m. Sin sobrecalentamiento por ciclos repetidos.',
     por_que_lo_necesitas:
-      'Tocás el teclado ocho horas por día. La calidad de las teclas no es un lujo, es ergonomía. Este es el teclado con el que Apple diseña sus propias computadoras.',
+      'Apoyás el iPhone y carga solo, sin enchufar nada. La forma más cómoda de mantener la batería arriba durante el día.',
     imagen_url:
-      'https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'Mac con Apple Silicon · Mac Intel con macOS Ventura+ · iPad Pro M2+',
+      'https://images.unsplash.com/photo-1591290619762-d6f1f2c4f7c5?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 12 o posterior · AirPods con estuche MagSafe',
     destacado: false,
-    tag: 'Diseño Apple',
+    tag: 'Inalámbrico',
   },
   {
     id: 8,
-    nombre: 'Apple TV 4K (3ª generación)',
-    categoria: 'Otros',
-    precio: 124999,
-    precio_original: 139999,
+    nombre: 'Cable USB-C a Lightning 1 m',
+    categoria: 'Cargadores',
+    precio: 9999,
+    precio_original: null,
+    modelos: [],
     descripcion:
-      'Chip A15 Bionic. Video 4K HDR10+ y Dolby Vision a 60 fps. Audio Spatial con Dolby Atmos. Siri Remote con control de TV por infrarrojos. Hub HomeKit integrado para automatización del hogar sin hub adicional.',
+      'Certificado MFi para carga rápida de hasta 20 W con adaptador compatible. Trenzado de nylon resistente a dobleces. Conectores reforzados.',
     por_que_lo_necesitas:
-      'Convierte cualquier televisor en pantalla Apple. Control del hogar, contenido en 4K real y cero anuncios en la interfaz. Una compra que mejora cada noche durante años.',
+      'El cable barato se pela en meses. Este aguanta miles de ciclos y carga el doble de rápido que el de caja.',
     imagen_url:
-      'https://images.unsplash.com/photo-1593359677879-a4bb92f4834e?auto=format&fit=crop&w=800&q=80',
-    compatible_con: 'TV con HDMI 2.1 · iPhone/iPad para AirPlay · HomePod',
+      'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 5 a 14 series · iPad con Lightning',
     destacado: false,
-    tag: 'Hogar inteligente',
+    tag: 'Certificado MFi',
+  },
+  {
+    id: 9,
+    nombre: 'Cargador de Pared 20W USB-C',
+    categoria: 'Cargadores',
+    precio: 13999,
+    precio_original: 16999,
+    modelos: [],
+    descripcion:
+      'Adaptador compacto de 20 W con tecnología Power Delivery. Carga el iPhone al 50% en 30 minutos. Protección contra sobrecarga y cortocircuito.',
+    por_que_lo_necesitas:
+      'Carga rápida real en un cubo del tamaño de un dado. El complemento ideal para cualquier cable USB-C.',
+    imagen_url:
+      'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 8 o posterior · AirPods · Apple Watch (con cable)',
+    destacado: false,
+    tag: 'Carga rápida',
+  },
+  {
+    id: 10,
+    nombre: 'Soporte Anillo MagSafe',
+    categoria: 'Accesorios',
+    precio: 8999,
+    precio_original: null,
+    modelos: [],
+    descripcion:
+      'Anillo plegable magnético que funciona como agarre y como soporte. Imán MagSafe de alta sujeción. Acabado en aluminio.',
+    por_que_lo_necesitas:
+      'Sostené el teléfono con un dedo o apoyalo para ver videos sin manos. Se pega y se saca sin dejar residuos.',
+    imagen_url:
+      'https://images.unsplash.com/photo-1530319067432-f2a729c03db5?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 12 o posterior · Fundas MagSafe',
+    destacado: false,
+    tag: 'Agarre + soporte',
+  },
+  {
+    id: 11,
+    nombre: 'AirPods Pro (2ª generación)',
+    categoria: 'Accesorios',
+    precio: 189999,
+    precio_original: 219999,
+    modelos: [],
+    descripcion:
+      'Chip H2 con cancelación activa de ruido. Modo Transparencia adaptativa. Audio espacial con seguimiento de cabeza. Hasta 30 h de batería con el estuche USB-C.',
+    por_que_lo_necesitas:
+      'La cancelación de ruido de segunda generación corta frecuencias que otros auriculares no alcanzan. A los cinco minutos olvidás que los tenés puestos.',
+    imagen_url:
+      'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?auto=format&fit=crop&w=800&q=80',
+    compatible_con: 'iPhone 12 o posterior · Mac · iPad',
+    destacado: false,
+    tag: 'Audio premium',
   },
 ]

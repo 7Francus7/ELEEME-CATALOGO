@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { CATEGORIES, formatPrice } from '../data/products'
+import { CATEGORIES, MODEL_CATEGORIES, MODELS, formatPrice } from '../data/products'
 import { XIcon } from './Icons'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
@@ -7,11 +7,12 @@ const ADMIN_PASSWORD = 'eleeme2024'
 
 const EMPTY_FORM = {
   nombre: '',
-  categoria: 'iPhone',
+  categoria: 'Fundas',
   precio: '',
   precio_original: '',
   tag: '',
   compatible_con: '',
+  modelos: [],
   imagen_url: '',
   descripcion: '',
   por_que_lo_necesitas: '',
@@ -367,6 +368,39 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                     <input className="admin-input" value={form.compatible_con} onChange={f('compatible_con')} required placeholder="Ej: iPhone 12 en adelante" />
                   </div>
                 </div>
+
+                {/* Modelos compatibles — habilita el filtro por modelo (solo Fundas / Protectores) */}
+                {MODEL_CATEGORIES.includes(form.categoria) && (
+                  <div className="pt-2">
+                    <label className="admin-label">Modelos de iPhone (filtro)</label>
+                    <p className="text-[11px] text-[#86868b] mb-3">Tocá los modelos para los que está disponible este producto.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {MODELS.map((m) => {
+                        const active = (form.modelos || []).includes(m)
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setForm((prev) => {
+                              const current = prev.modelos || []
+                              return {
+                                ...prev,
+                                modelos: active ? current.filter((x) => x !== m) : [...current, m],
+                              }
+                            })}
+                            className={`text-[11px] font-semibold px-3 py-2 rounded-full border transition-all ${
+                              active
+                                ? 'bg-[#0071e3] border-[#0071e3] text-white'
+                                : 'bg-[#f5f5f7] dark:bg-[#2c2c2e] border-transparent text-[#6e6e73] dark:text-[#86868b] hover:border-[#0071e3]'
+                            }`}
+                          >
+                            {m}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Bloque: Precios y Oferta */}

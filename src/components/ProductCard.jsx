@@ -1,6 +1,11 @@
-import { formatPrice } from '../data/products'
+import { formatPrice, WHATSAPP_NUMBER } from '../data/products'
+import { WhatsAppIcon } from './Icons'
 
 export default function ProductCard({ product, onOpen }) {
+  const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+    `Hola! Me interesa el ${product.nombre}. ¿Me pasás más info?`
+  )}`
+
   const discount = product.precio_original
     ? Math.round((1 - product.precio / product.precio_original) * 100)
     : null
@@ -55,8 +60,8 @@ export default function ProductCard({ product, onOpen }) {
           </p>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-50 dark:border-white/5">
-          <div className="flex flex-col">
+        <div className="flex items-center justify-between gap-2 pt-4 border-t border-gray-50 dark:border-white/5">
+          <div className="flex flex-col min-w-0">
             <span className="font-bold text-[#1d1d1f] dark:text-white text-base sm:text-lg tracking-tight">
               {formatPrice(product.precio)}
             </span>
@@ -66,10 +71,21 @@ export default function ProductCard({ product, onOpen }) {
               </span>
             )}
           </div>
-          
-          <div className="w-8 h-8 rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e] flex items-center justify-center group-hover:bg-[#0071e3] transition-all duration-300">
-            <span className="text-[#1d1d1f] dark:text-white group-hover:text-white transition-colors text-lg leading-none">+</span>
-          </div>
+
+          {/* Botón directo de WhatsApp — no abre el modal */}
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            aria-label={`Consultar ${product.nombre} por WhatsApp`}
+            className="flex-shrink-0 flex items-center gap-1.5 bg-[#25d366] hover:bg-[#22c55e] active:scale-95
+                       text-white text-xs font-semibold px-3 py-2 rounded-full transition-all duration-200
+                       shadow-sm shadow-green-500/20"
+          >
+            <WhatsAppIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Consultar</span>
+          </a>
         </div>
       </div>
     </article>

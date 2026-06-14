@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { CATEGORIES } from './data/products'
+import { CATEGORIES, MODEL_CATEGORIES, availableModelsFor } from './data/products'
 import { useProducts } from './hooks/useProducts'
 import Header from './components/Header'
 import HeroSection from './components/HeroSection'
@@ -21,6 +21,7 @@ export default function App() {
   const { products, saveProducts, resetToDefaults } = useProducts()
 
   const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [selectedModel, setSelectedModel] = useState('Todos')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [adminOpen, setAdminOpen] = useState(false)
@@ -30,14 +31,35 @@ export default function App() {
     return dark
   })
 
+  // Cambiar de categoría reinicia el filtro de modelo
+  const handleCategoryChange = (cat) => {
+    setSelectedCategory(cat)
+    setSelectedModel('Todos')
+  }
+
   // Producto destacado para el hero (primero con destacado: true)
   const heroProduct = useMemo(() => products.find((p) => p.destacado), [products])
 
-  // Filtrado instantáneo por categoría + búsqueda
+  // El filtro por modelo solo aplica en categorías de Fundas / Protectores
+  const modelFilterActive = MODEL_CATEGORIES.includes(selectedCategory) && !searchQuery
+
+  // Modelos disponibles para la categoría actual (solo los que existen en el catálogo)
+  const modelsForCategory = useMemo(() => {
+    if (!modelFilterActive) return []
+    return availableModelsFor(products.filter((p) => p.categoria === selectedCategory))
+  }, [products, selectedCategory, modelFilterActive])
+
+  // Filtrado instantáneo por categoría + modelo + búsqueda
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesCategory =
         selectedCategory === 'Todos' || p.categoria === selectedCategory
+
+      const matchesModel =
+        !modelFilterActive ||
+        selectedModel === 'Todos' ||
+        (p.modelos || []).includes(selectedModel)
+
       const q = searchQuery.trim().toLowerCase()
       const matchesSearch =
         !q ||
@@ -50,9 +72,9 @@ export default function App() {
       // para que no aparezca duplicado (ya que está en el Hero)
       if (selectedCategory === 'Todos' && !q && p.destacado) return false
 
-      return matchesCategory && matchesSearch
+      return matchesCategory && matchesModel && matchesSearch
     })
-  }, [products, selectedCategory, searchQuery])
+  }, [products, selectedCategory, selectedModel, modelFilterActive, searchQuery])
 
   const toggleDark = () => {
     const next = !isDark
@@ -67,12 +89,18 @@ export default function App() {
     return () => { document.body.style.overflow = '' }
   }, [adminOpen, selectedProduct])
 
+  // Padding superior extra cuando el header muestra la fila de modelos
+  const showHero = !searchQuery && selectedCategory === 'Todos'
+
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-black transition-colors duration-300">
       <Header
         categories={CATEGORIES}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={handleCategoryChange}
+        models={modelsForCategory}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         isDark={isDark}
@@ -80,16 +108,16 @@ export default function App() {
       />
 
       <main>
-        {!searchQuery && selectedCategory === 'Todos' && (
+        {showHero && (
           <HeroSection product={heroProduct} onOpen={setSelectedProduct} />
         )}
-        <div className={(!searchQuery && selectedCategory === 'Todos') ? '' : 'pt-28 sm:pt-32'}>
+        <div className={showHero ? '' : (modelsForCategory.length > 0 ? 'pt-40 sm:pt-44' : 'pt-28 sm:pt-32')}>
           <ProductGrid
             products={filteredProducts}
             onOpen={setSelectedProduct}
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
-            onClearSearch={() => { setSearchQuery(''); setSelectedCategory('Todos') }}
+            onClearSearch={() => { handleCategoryChange('Todos'); setSearchQuery('') }}
           />
         </div>
       </main>
