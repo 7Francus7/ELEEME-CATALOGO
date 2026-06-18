@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { CATEGORIES, MODEL_CATEGORIES, availableModelsFor } from './data/products'
 import { useProducts } from './hooks/useProducts'
 import Header from './components/Header'
-import HeroSection from './components/HeroSection'
+import ServiceTechnic from './components/ServiceTechnic'
 import ProductGrid from './components/ProductGrid'
 import ProductModal from './components/ProductModal'
 import AdminPanel from './components/AdminPanel'
@@ -136,7 +136,7 @@ export default function App() {
 
       <main>
         {showHero && (
-          <HeroSection product={heroProduct} onOpen={setSelectedProduct} />
+          <ServiceTechnic />
         )}
         <div className={showHero ? '' : (modelsForCategory.length > 0 ? 'pt-40 sm:pt-44' : 'pt-28 sm:pt-32')}>
           <ProductGrid

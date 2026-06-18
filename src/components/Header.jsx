@@ -96,20 +96,20 @@ export default function Header({
           </div>
         </div>
 
-        {/* Pills de categorías */}
+        {/* Categorías - Layout Grid */}
         {!searchOpen && (
-          <div className="flex gap-2 pb-3 overflow-x-auto scrollbar-hide">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pb-4 animate-slide-down">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => onCategoryChange(cat)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                className={`py-2.5 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex flex-col items-center justify-center gap-1 min-h-[60px] sm:min-h-[70px] ${
                   selectedCategory === cat
-                    ? 'bg-[#1d1d1f] dark:bg-white text-white dark:text-black'
-                    : 'bg-[#f5f5f7] dark:bg-[#1c1c1e] text-[#6e6e73] dark:text-[#86868b] hover:bg-gray-200 dark:hover:bg-[#2c2c2e]'
+                    ? 'bg-[#0071e3] text-white shadow-lg shadow-[#0071e3]/30'
+                    : 'bg-[#f5f5f7] dark:bg-[#1c1c1e] text-[#1d1d1f] dark:text-[#86868b] hover:bg-gray-300 dark:hover:bg-[#2c2c2e]'
                 }`}
               >
-                {cat}
+                <span className="line-clamp-2 text-center">{cat}</span>
               </button>
             ))}
           </div>
