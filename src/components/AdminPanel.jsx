@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { CATEGORIES, MODEL_CATEGORIES, MODELS, formatPrice } from '../data/products'
+import { CATEGORIES, MODEL_CATEGORIES, MODELS, DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
 import { XIcon } from './Icons'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
@@ -19,6 +19,10 @@ const EMPTY_FORM = {
   destacado: false,
   ocultar_descuento_nro: false,
   ocultar_descuento_porcentaje: false,
+  colores: [],
+  stock: {},
+  notificar_cuando_stock: [],
+  stock_gestion: 'manual',
 }
 
 // Redimensiona la imagen a máx 800px y la convierte a JPEG 82% antes de guardar
@@ -158,6 +162,76 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
     }
   }
 
+  // ── Gestión de colores ──────────────────────────────────────────────────────
+  const updateColor = (index, patch) => setForm((prev) => {
+    const colores = [...(prev.colores || [])]
+    const old = colores[index]
+    colores[index] = { ...old, ...patch }
+    let stock = prev.stock || {}
+    // Si cambió el nombre, migrar las claves de stock para no perder cantidades
+    if (patch.nombre !== undefined && patch.nombre !== old.nombre) {
+      stock = Object.fromEntries(
+        Object.entries(prev.stock || {}).map(([k, byColor]) => {
+          const nb = { ...byColor }
+          if (Object.prototype.hasOwnProperty.call(nb, old.nombre)) {
+            nb[patch.nombre] = nb[old.nombre]
+            delete nb[old.nombre]
+          }
+          return [k, nb]
+        })
+      )
+    }
+    return { ...prev, colores, stock }
+  })
+
+  const removeColor = (index) => setForm((prev) => {
+    const target = (prev.colores || [])[index]
+    const colores = (prev.colores || []).filter((_, i) => i !== index)
+    const stock = Object.fromEntries(
+      Object.entries(prev.stock || {}).map(([k, byColor]) => {
+        const nb = { ...byColor }
+        if (target) delete nb[target.nombre]
+        return [k, nb]
+      })
+    )
+    return { ...prev, colores, stock }
+  })
+
+  const addColor = () => setForm((prev) => ({
+    ...prev,
+    colores: [...(prev.colores || []), { nombre: 'Nuevo color', codigo: '#888888', activo: true }],
+  }))
+
+  // Claves de stock: por modelo (Fundas/Protectores) o una única para el resto
+  const stockKeys =
+    MODEL_CATEGORIES.includes(form.categoria) && (form.modelos || []).length
+      ? form.modelos
+      : [DEFAULT_STOCK_KEY]
+
+  const setStockQty = (modelKey, colorName, value) => {
+    const qty = Math.max(0, Math.floor(Number(value) || 0))
+    const prevQty = form.stock?.[modelKey]?.[colorName] ?? 0
+    setForm((prev) => {
+      const stock = { ...(prev.stock || {}) }
+      stock[modelKey] = { ...(stock[modelKey] || {}), [colorName]: qty }
+      return { ...prev, stock }
+    })
+    // Aviso de restock cuando un color pasa de 0 a positivo y hay gente esperando
+    if (prevQty === 0 && qty > 0 && (form.notificar_cuando_stock || []).length) {
+      const n = form.notificar_cuando_stock.length
+      setSaveStatus(`✓ Restock — ${n} ${n === 1 ? 'persona espera' : 'personas esperan'} aviso`)
+      setTimeout(() => setSaveStatus(''), 3500)
+    }
+  }
+
+  const copyRestockEmails = () => {
+    const emails = (form.notificar_cuando_stock || []).join(', ')
+    if (!emails) return
+    navigator.clipboard?.writeText(emails)
+    setSaveStatus('Emails copiados')
+    setTimeout(() => setSaveStatus(''), 2000)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const precio = Number(form.precio)
@@ -176,16 +250,9 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       updated = [...products, { ...form, id: newId, precio, precio_original }]
     }
 
+    // Si se marca como destacado, desmarcar el resto (solo uno en el banner)
     if (form.destacado) {
       updated = updated.map((p) => ({ ...p, destacado: p.id === targetId }))
-    }
-
-    // Asegurar que los nuevos campos booleanos se guarden correctamente
-    if (editingId) {
-      updated = updated.map(p => p.id === editingId ? { ...p, ...form, precio, precio_original } : p)
-    } else {
-      const newId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1
-      updated = [...products, { ...form, id: newId, precio, precio_original }]
     }
 
     try {
@@ -398,6 +465,135 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                           </button>
                         )
                       })}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Bloque: Stock y Colores */}
+              <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm space-y-8 border-2 border-emerald-50 dark:border-emerald-500/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-1 px-4 bg-emerald-50 dark:bg-emerald-500/10 text-[10px] font-black text-emerald-600 uppercase tracking-widest rounded-bl-xl">Inventario</div>
+
+                {/* Colores */}
+                <div>
+                  <h3 className="text-xs font-black uppercase text-[#86868b] tracking-tighter mb-4">Colores disponibles</h3>
+                  <div className="space-y-3">
+                    {(form.colores || []).map((c, i) => (
+                      <div key={i} className="flex items-center gap-3 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-3">
+                        <input
+                          type="color"
+                          value={/^#[0-9a-fA-F]{6}$/.test(c.codigo) ? c.codigo : '#888888'}
+                          onChange={(e) => updateColor(i, { codigo: e.target.value })}
+                          className="w-10 h-10 rounded-lg border-0 bg-transparent cursor-pointer flex-shrink-0"
+                          title="Color"
+                        />
+                        <input
+                          type="text"
+                          value={c.nombre}
+                          onChange={(e) => updateColor(i, { nombre: e.target.value })}
+                          placeholder="Nombre del color"
+                          className="flex-1 min-w-0 bg-white dark:bg-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]/20"
+                        />
+                        <label className="flex items-center gap-2 cursor-pointer flex-shrink-0" title="Visible en el catálogo">
+                          <input
+                            type="checkbox"
+                            checked={c.activo !== false}
+                            onChange={(e) => updateColor(i, { activo: e.target.checked })}
+                            className="w-4 h-4 rounded border-gray-300 text-[#0071e3]"
+                          />
+                          <span className="text-[11px] font-medium text-[#6e6e73] dark:text-[#86868b] hidden sm:inline">Activo</span>
+                        </label>
+                        <button type="button" onClick={() => removeColor(i)} title="Eliminar color" className="p-2 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+                          <TrashIcon className="w-5 h-5" />
+                        </button>
+                      </div>
+                    ))}
+                    {(form.colores || []).length === 0 && (
+                      <p className="text-[11px] text-[#86868b] italic">Sin colores cargados todavía.</p>
+                    )}
+                  </div>
+                  <button type="button" onClick={addColor} className="mt-3 text-xs font-black uppercase tracking-widest text-[#0071e3] bg-blue-50 dark:bg-blue-500/10 px-4 py-2.5 rounded-full active:scale-95 transition-all">
+                    + Agregar color
+                  </button>
+                </div>
+
+                {/* Tabla de stock por modelo */}
+                {(form.colores || []).length > 0 && (
+                  <div className="pt-6 border-t border-gray-100 dark:border-white/5">
+                    <h3 className="text-xs font-black uppercase text-[#86868b] tracking-tighter mb-1">Stock por modelo y color</h3>
+                    <p className="text-[11px] text-[#86868b] mb-4">Cantidad de unidades de cada color. 0 = agotado.</p>
+                    <div className="space-y-4">
+                      {stockKeys.map((modelKey) => (
+                        <div key={modelKey} className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-4">
+                          <p className="text-[13px] font-bold text-[#1d1d1f] dark:text-white mb-3">
+                            {modelKey === DEFAULT_STOCK_KEY ? 'Stock general' : modelKey}
+                          </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {(form.colores || []).map((c, i) => (
+                              <div key={i}>
+                                <label className="flex items-center gap-1.5 text-[11px] font-medium text-[#6e6e73] dark:text-[#86868b] mb-1 truncate">
+                                  <span className="w-3 h-3 rounded-full border border-black/10 dark:border-white/20 flex-shrink-0" style={{ backgroundColor: c.codigo }} />
+                                  <span className="truncate">{c.nombre}</span>
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={form.stock?.[modelKey]?.[c.nombre] ?? 0}
+                                  onChange={(e) => setStockQty(modelKey, c.nombre, e.target.value)}
+                                  className="w-full bg-white dark:bg-[#1c1c1e] dark:text-white rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]/20"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Gestión de stock: manual vs automático */}
+                <div className="pt-6 border-t border-gray-100 dark:border-white/5">
+                  <h3 className="text-xs font-black uppercase text-[#86868b] tracking-tighter mb-3">¿Cómo querés manejar el stock?</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { val: 'manual', titulo: 'Manual', desc: 'Vos editás las cantidades cuando vendés.' },
+                      { val: 'automatico', titulo: 'Automático', desc: 'Baja al comprar (cuando integres carrito).' },
+                    ].map((opt) => {
+                      const active = (form.stock_gestion || 'manual') === opt.val
+                      return (
+                        <button
+                          key={opt.val}
+                          type="button"
+                          onClick={() => setForm((p) => ({ ...p, stock_gestion: opt.val }))}
+                          className={`text-left p-4 rounded-2xl border-2 transition-all ${active ? 'border-[#0071e3] bg-blue-50/50 dark:bg-blue-500/10' : 'border-gray-100 dark:border-white/10 hover:border-[#0071e3]/40'}`}
+                        >
+                          <p className={`text-sm font-bold ${active ? 'text-[#0071e3]' : 'text-[#1d1d1f] dark:text-white'}`}>
+                            {active ? '● ' : '○ '}{opt.titulo}
+                          </p>
+                          <p className="text-[11px] text-[#86868b] mt-1 leading-relaxed">{opt.desc}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Lista de espera de restock */}
+                {(form.notificar_cuando_stock || []).length > 0 && (
+                  <div className="pt-6 border-t border-gray-100 dark:border-white/5">
+                    <div className="flex items-center justify-between gap-3 mb-3">
+                      <h3 className="text-xs font-black uppercase text-amber-600 tracking-tighter">
+                        🔔 {form.notificar_cuando_stock.length} {form.notificar_cuando_stock.length === 1 ? 'persona espera' : 'personas esperan'} restock
+                      </h3>
+                      <button type="button" onClick={copyRestockEmails} className="text-[11px] font-black uppercase tracking-widest text-[#0071e3] bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-full active:scale-95 transition-all">
+                        Copiar todos
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {form.notificar_cuando_stock.map((email, i) => (
+                        <span key={i} className="text-[11px] font-medium text-[#6e6e73] dark:text-[#86868b] bg-[#f5f5f7] dark:bg-[#2c2c2e] px-3 py-1.5 rounded-full">
+                          {email}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 )}

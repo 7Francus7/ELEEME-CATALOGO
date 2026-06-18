@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { products as defaultProducts } from '../data/products'
 
-const STORAGE_KEY = 'eleeme_catalog_v2'
+const STORAGE_KEY = 'eleeme_catalog_v3'
 
 // Carga productos desde localStorage; si no hay datos, usa los defaults de products.js
 function loadProducts() {

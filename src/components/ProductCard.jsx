@@ -1,7 +1,7 @@
-import { formatPrice, WHATSAPP_NUMBER } from '../data/products'
+import { formatPrice, WHATSAPP_NUMBER, hasStock } from '../data/products'
 import { WhatsAppIcon } from './Icons'
 
-export default function ProductCard({ product, onOpen }) {
+export default function ProductCard({ product, onOpen, activeModel }) {
   const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     `Hola! Me interesa el ${product.nombre}. ¿Me pasás más info?`
   )}`
@@ -9,6 +9,9 @@ export default function ProductCard({ product, onOpen }) {
   const discount = product.precio_original
     ? Math.round((1 - product.precio / product.precio_original) * 100)
     : null
+
+  // Badge de stock solo cuando hay un modelo filtrado (null = no mostrar)
+  const inStock = activeModel ? hasStock(product, activeModel) : null
 
   return (
     <article
@@ -49,9 +52,22 @@ export default function ProductCard({ product, onOpen }) {
       {/* Info */}
       <div className="p-5 flex flex-col flex-1">
         <div className="mb-auto">
-          <p className="text-[10px] font-bold text-[#0071e3] uppercase tracking-widest mb-1 opacity-80">
-            {product.categoria}
-          </p>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <p className="text-[10px] font-bold text-[#0071e3] uppercase tracking-widest opacity-80">
+              {product.categoria}
+            </p>
+            {inStock !== null && (
+              <span
+                className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                  inStock
+                    ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+                    : 'bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-400'
+                }`}
+              >
+                {inStock ? 'En stock' : 'Agotado'}
+              </span>
+            )}
+          </div>
           <h3 className="font-semibold text-[#1d1d1f] dark:text-white text-[15px] sm:text-[17px] leading-[1.3] tracking-tight mb-2 group-hover:text-[#0071e3] transition-colors duration-300">
             {product.nombre}
           </h3>

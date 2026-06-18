@@ -26,6 +26,9 @@ export const MODELS = [
   'iPhone 12',
 ]
 
+// Clave de stock usada por los productos que no se filtran por modelo (cargadores, accesorios)
+export const DEFAULT_STOCK_KEY = 'Único'
+
 // ─── HELPER DE PRECIO ─────────────────────────────────────────────────────────
 export const formatPrice = (price) =>
   new Intl.NumberFormat('es-AR', {
@@ -41,12 +44,57 @@ export const availableModelsFor = (productList) => {
   return MODELS.filter((m) => set.has(m))
 }
 
+// ─── HELPERS DE STOCK Y COLORES ───────────────────────────────────────────────
+// Indica si el producto se gestiona por modelo (Fundas / Protectores con modelos)
+export const usesModels = (product) => Array.isArray(product.modelos) && product.modelos.length > 0
+
+// Colores activos de un producto (los desactivados no se muestran al cliente)
+export const activeColors = (product) =>
+  (product.colores || []).filter((c) => c.activo !== false)
+
+// Clave de stock a usar para el modelo seleccionado.
+// - Productos con modelos: la clave es el modelo (null si no hay modelo elegido)
+// - Productos sin modelos: siempre DEFAULT_STOCK_KEY
+const stockKeyFor = (product, model) => {
+  if (usesModels(product)) {
+    return model && model !== 'Todos' ? model : null
+  }
+  return DEFAULT_STOCK_KEY
+}
+
+// Stock de un color concreto para el modelo dado. null si no aplica (sin modelo elegido)
+export const colorStock = (product, model, colorName) => {
+  const key = stockKeyFor(product, model)
+  if (!key) return null
+  return product.stock?.[key]?.[colorName] ?? 0
+}
+
+// Stock total del modelo (suma de todos los colores activos).
+// null = no se puede determinar (producto con modelos sin modelo elegido)
+export const modelStock = (product, model) => {
+  const key = stockKeyFor(product, model)
+  if (!key) return null
+  const byColor = product.stock?.[key]
+  if (!byColor) return 0
+  return activeColors(product).reduce((sum, c) => sum + (Number(byColor[c.nombre]) || 0), 0)
+}
+
+// True si hay al menos una unidad para el modelo dado
+export const hasStock = (product, model) => {
+  const total = modelStock(product, model)
+  return total === null ? null : total > 0
+}
+
 // ─── CATÁLOGO DE PRODUCTOS ────────────────────────────────────────────────────
 // Campos:
 //   categoria → una de CATEGORIES (sin 'Todos')
 //   modelos → array de modelos compatibles; habilita el filtro por modelo (solo Fundas / Protectores)
 //   compatible_con → texto legible que se muestra en la card y el modal
 //   imagen_url → reemplazar con fotos reales del cliente
+//   colores → [{ nombre, codigo (hex), activo }]
+//   stock → { [modelo|DEFAULT_STOCK_KEY]: { [nombreColor]: cantidad } }
+//   notificar_cuando_stock → emails que esperan aviso de restock
+//   stock_gestion → 'manual' | 'automatico'
 export const products = [
   {
     id: 1,
@@ -64,6 +112,20 @@ export const products = [
     compatible_con: 'iPhone 13 Pro a 15 Pro Max',
     destacado: true,
     tag: 'Más vendido',
+    colores: [
+      { nombre: 'Blanco', codigo: '#FFFFFF', activo: true },
+      { nombre: 'Plata', codigo: '#C7C7CC', activo: true },
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+    ],
+    stock: {
+      'iPhone 15 Pro Max': { Blanco: 5, Plata: 3, Negro: 0 },
+      'iPhone 15 Pro': { Blanco: 2, Plata: 0, Negro: 4 },
+      'iPhone 14 Pro Max': { Blanco: 0, Plata: 1, Negro: 2 },
+      'iPhone 14 Pro': { Blanco: 3, Plata: 2, Negro: 0 },
+      'iPhone 13 Pro': { Blanco: 1, Plata: 0, Negro: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 2,
@@ -85,6 +147,23 @@ export const products = [
     compatible_con: 'iPhone 13 a 16 Pro Max',
     destacado: false,
     tag: 'Anti-amarilleo',
+    colores: [
+      { nombre: 'Transparente', codigo: '#EAEAEA', activo: true },
+      { nombre: 'Humo', codigo: '#6e6e73', activo: true },
+    ],
+    stock: {
+      'iPhone 16 Pro Max': { Transparente: 8, Humo: 4 },
+      'iPhone 16 Pro': { Transparente: 6, Humo: 2 },
+      'iPhone 16': { Transparente: 5, Humo: 0 },
+      'iPhone 15 Pro Max': { Transparente: 4, Humo: 3 },
+      'iPhone 15 Pro': { Transparente: 0, Humo: 1 },
+      'iPhone 15': { Transparente: 3, Humo: 2 },
+      'iPhone 14 Pro Max': { Transparente: 2, Humo: 0 },
+      'iPhone 14': { Transparente: 1, Humo: 1 },
+      'iPhone 13': { Transparente: 0, Humo: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 3,
@@ -105,6 +184,22 @@ export const products = [
     compatible_con: 'iPhone 12 a 15 Pro Max',
     destacado: false,
     tag: 'Grado militar',
+    colores: [
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+      { nombre: 'Azul', codigo: '#2563eb', activo: true },
+      { nombre: 'Verde Militar', codigo: '#4b5320', activo: true },
+    ],
+    stock: {
+      'iPhone 15 Pro Max': { Negro: 6, Azul: 3, 'Verde Militar': 2 },
+      'iPhone 15': { Negro: 4, Azul: 0, 'Verde Militar': 1 },
+      'iPhone 14 Pro Max': { Negro: 2, Azul: 2, 'Verde Militar': 0 },
+      'iPhone 14': { Negro: 5, Azul: 1, 'Verde Militar': 3 },
+      'iPhone 13 Pro Max': { Negro: 0, Azul: 0, 'Verde Militar': 0 },
+      'iPhone 13': { Negro: 3, Azul: 2, 'Verde Militar': 0 },
+      'iPhone 12': { Negro: 1, Azul: 0, 'Verde Militar': 1 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 4,
@@ -125,6 +220,23 @@ export const products = [
     compatible_con: 'iPhone 14 a 16 Pro',
     destacado: false,
     tag: 'MagSafe',
+    colores: [
+      { nombre: 'Naranja', codigo: '#FF9500', activo: true },
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+      { nombre: 'Azul', codigo: '#0071e3', activo: true },
+      { nombre: 'Rosa', codigo: '#FF6482', activo: true },
+      { nombre: 'Blanco', codigo: '#FFFFFF', activo: true },
+    ],
+    stock: {
+      'iPhone 16 Pro': { Naranja: 3, Negro: 5, Azul: 2, Rosa: 4, Blanco: 1 },
+      'iPhone 16': { Naranja: 0, Negro: 3, Azul: 2, Rosa: 0, Blanco: 2 },
+      'iPhone 15 Pro Max': { Naranja: 2, Negro: 4, Azul: 0, Rosa: 3, Blanco: 5 },
+      'iPhone 15': { Naranja: 1, Negro: 0, Azul: 1, Rosa: 2, Blanco: 0 },
+      'iPhone 14 Pro': { Naranja: 0, Negro: 2, Azul: 0, Rosa: 0, Blanco: 1 },
+      'iPhone 14': { Naranja: 2, Negro: 1, Azul: 3, Rosa: 1, Blanco: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 5,
@@ -145,6 +257,20 @@ export const products = [
     compatible_con: 'iPhone 14 Pro a 16 Pro Max',
     destacado: false,
     tag: 'Vidrio 9H',
+    colores: [
+      { nombre: 'Transparente', codigo: '#EAEAEA', activo: true },
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+    ],
+    stock: {
+      'iPhone 16 Pro Max': { Transparente: 10, Negro: 6 },
+      'iPhone 16 Pro': { Transparente: 8, Negro: 4 },
+      'iPhone 15 Pro Max': { Transparente: 5, Negro: 0 },
+      'iPhone 15 Pro': { Transparente: 3, Negro: 2 },
+      'iPhone 14 Pro Max': { Transparente: 0, Negro: 1 },
+      'iPhone 14 Pro': { Transparente: 2, Negro: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 6,
@@ -165,6 +291,21 @@ export const products = [
     compatible_con: 'iPhone 13 a 16 Pro Max',
     destacado: false,
     tag: 'Aluminio',
+    colores: [
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+      { nombre: 'Plata', codigo: '#C7C7CC', activo: true },
+      { nombre: 'Dorado', codigo: '#D4AF37', activo: true },
+    ],
+    stock: {
+      'iPhone 16 Pro Max': { Negro: 4, Plata: 3, Dorado: 2 },
+      'iPhone 15 Pro Max': { Negro: 2, Plata: 0, Dorado: 1 },
+      'iPhone 15': { Negro: 3, Plata: 2, Dorado: 0 },
+      'iPhone 14 Pro Max': { Negro: 0, Plata: 1, Dorado: 0 },
+      'iPhone 14': { Negro: 1, Plata: 0, Dorado: 2 },
+      'iPhone 13': { Negro: 0, Plata: 0, Dorado: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 7,
@@ -182,6 +323,14 @@ export const products = [
     compatible_con: 'iPhone 12 o posterior · AirPods con estuche MagSafe',
     destacado: false,
     tag: 'Inalámbrico',
+    colores: [
+      { nombre: 'Blanco', codigo: '#FFFFFF', activo: true },
+    ],
+    stock: {
+      [DEFAULT_STOCK_KEY]: { Blanco: 7 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 8,
@@ -199,6 +348,15 @@ export const products = [
     compatible_con: 'iPhone 5 a 14 series · iPad con Lightning',
     destacado: false,
     tag: 'Certificado MFi',
+    colores: [
+      { nombre: 'Blanco', codigo: '#FFFFFF', activo: true },
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+    ],
+    stock: {
+      [DEFAULT_STOCK_KEY]: { Blanco: 12, Negro: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 9,
@@ -216,6 +374,14 @@ export const products = [
     compatible_con: 'iPhone 8 o posterior · AirPods · Apple Watch (con cable)',
     destacado: false,
     tag: 'Carga rápida',
+    colores: [
+      { nombre: 'Blanco', codigo: '#FFFFFF', activo: true },
+    ],
+    stock: {
+      [DEFAULT_STOCK_KEY]: { Blanco: 9 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 10,
@@ -233,6 +399,16 @@ export const products = [
     compatible_con: 'iPhone 12 o posterior · Fundas MagSafe',
     destacado: false,
     tag: 'Agarre + soporte',
+    colores: [
+      { nombre: 'Negro', codigo: '#1d1d1f', activo: true },
+      { nombre: 'Plata', codigo: '#C7C7CC', activo: true },
+      { nombre: 'Dorado', codigo: '#D4AF37', activo: true },
+    ],
+    stock: {
+      [DEFAULT_STOCK_KEY]: { Negro: 4, Plata: 2, Dorado: 0 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
   {
     id: 11,
@@ -250,5 +426,13 @@ export const products = [
     compatible_con: 'iPhone 12 o posterior · Mac · iPad',
     destacado: false,
     tag: 'Audio premium',
+    colores: [
+      { nombre: 'Blanco', codigo: '#FFFFFF', activo: true },
+    ],
+    stock: {
+      [DEFAULT_STOCK_KEY]: { Blanco: 3 },
+    },
+    notificar_cuando_stock: [],
+    stock_gestion: 'manual',
   },
 ]

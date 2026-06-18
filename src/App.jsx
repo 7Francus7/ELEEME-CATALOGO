@@ -37,6 +37,21 @@ export default function App() {
     setSelectedModel('Todos')
   }
 
+  // Registra un email para avisar cuando vuelva el stock de un producto.
+  // Devuelve 'added' | 'duplicate' | 'invalid'
+  const handleNotifyRestock = (productId, email) => {
+    const clean = (email || '').trim().toLowerCase()
+    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return 'invalid'
+    const product = products.find((p) => p.id === productId)
+    const list = product?.notificar_cuando_stock || []
+    if (list.some((e) => e.toLowerCase() === clean)) return 'duplicate'
+    const updated = products.map((p) =>
+      p.id === productId ? { ...p, notificar_cuando_stock: [...list, clean] } : p
+    )
+    saveProducts(updated)
+    return 'added'
+  }
+
   // Producto destacado para el hero (primero con destacado: true)
   const heroProduct = useMemo(() => products.find((p) => p.destacado), [products])
 
@@ -92,6 +107,9 @@ export default function App() {
   // Padding superior extra cuando el header muestra la fila de modelos
   const showHero = !searchQuery && selectedCategory === 'Todos'
 
+  // Modelo activo para mostrar stock (null si no hay filtro de modelo aplicado)
+  const activeModel = modelFilterActive && selectedModel !== 'Todos' ? selectedModel : null
+
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-black transition-colors duration-300">
       <Header
@@ -117,6 +135,7 @@ export default function App() {
             onOpen={setSelectedProduct}
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
+            activeModel={activeModel}
             onClearSearch={() => { handleCategoryChange('Todos'); setSearchQuery('') }}
           />
         </div>
@@ -127,7 +146,9 @@ export default function App() {
       {/* Modal de detalle de producto */}
       {selectedProduct && (
         <ProductModal
-          product={selectedProduct}
+          product={products.find((p) => p.id === selectedProduct.id) || selectedProduct}
+          activeModel={activeModel}
+          onNotifyRestock={handleNotifyRestock}
           onClose={() => setSelectedProduct(null)}
         />
       )}
