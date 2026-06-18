@@ -722,7 +722,7 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
               </div>
 
               {/* Botón Guardar (Flotante en móvil) */}
-              <div className="fixed bottom-0 left-0 right-0 p-5 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-100 dark:border-white/10 lg:relative lg:bg-transparent lg:border-0 lg:p-0 lg:pt-8 z-30">
+              <div className="fixed bottom-0 left-0 right-0 p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] bg-white/80 dark:bg-black/80 backdrop-blur-xl border-t border-gray-100 dark:border-white/10 lg:relative lg:bg-transparent lg:border-0 lg:p-0 lg:pt-8 z-30">
                 <div className="flex flex-col sm:flex-row items-center gap-4 max-w-3xl mx-auto">
                   <button type="submit" className="w-full sm:flex-1 bg-black dark:bg-white dark:text-black text-white py-5 rounded-[24px] font-black uppercase tracking-widest shadow-2xl active:scale-[0.98] transition-all text-sm">
                     {editingId ? 'ACTUALIZAR PRODUCTO' : 'PUBLICAR EN CATÁLOGO'}

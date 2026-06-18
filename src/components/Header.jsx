@@ -79,14 +79,14 @@ export default function Header({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="p-2 text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
+                  className="p-2.5 flex items-center justify-center text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
                   aria-label="Buscar"
                 >
                   <SearchIcon className="w-5 h-5" />
                 </button>
                 <button
                   onClick={onToggleDark}
-                  className="p-2 text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
+                  className="p-2.5 flex items-center justify-center text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
                   aria-label="Cambiar tema"
                 >
                   {isDark ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}

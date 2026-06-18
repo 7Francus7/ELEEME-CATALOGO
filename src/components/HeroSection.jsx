@@ -25,8 +25,8 @@ export default function HeroSection({ product, onOpen }) {
     : null
 
   return (
-    <section className="pt-28 pb-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1c1c1e] via-[#2c2c2e] to-[#1a1a2e] min-h-[400px] sm:min-h-[520px] flex items-center group">
+    <section className="pt-24 sm:pt-28 pb-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1c1c1e] via-[#2c2c2e] to-[#1a1a2e] min-h-[300px] sm:min-h-[520px] flex items-center group">
         
         {/* Luz de fondo dinámica */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -34,7 +34,7 @@ export default function HeroSection({ product, onOpen }) {
           <div className="absolute bottom-[-10%] left-[10%] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px]" />
         </div>
 
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center w-full p-8 sm:p-12 lg:p-16">
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center w-full p-6 sm:p-12 lg:p-16">
           
           {/* Info */}
           <div className="animate-slide-up">
@@ -51,15 +51,15 @@ export default function HeroSection({ product, onOpen }) {
               )}
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-bold text-white leading-[1.1] mb-6 tracking-tight">
+            <h1 className="text-3xl sm:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6 tracking-tight">
               {product.nombre}
             </h1>
 
-            <p className="text-[#86868b] text-base sm:text-lg mb-8 leading-relaxed max-w-md">
+            <p className="text-[#86868b] text-sm sm:text-lg mb-6 sm:mb-8 leading-relaxed max-w-md line-clamp-2 sm:line-clamp-none">
               {product.descripcion.split('.')[0]}.
             </p>
 
-            <div className="flex items-center gap-5 mb-10">
+            <div className="flex items-center gap-5 mb-6 sm:mb-10">
               <div className="flex flex-col">
                 <span className="text-3xl sm:text-4xl font-semibold text-white tracking-tight">
                   {formatPrice(product.precio)}
@@ -74,7 +74,7 @@ export default function HeroSection({ product, onOpen }) {
 
             <button
               onClick={() => onOpen(product)}
-              className="inline-flex items-center gap-2 bg-white hover:bg-[#f5f5f7] active:scale-95 text-black text-sm sm:text-base font-semibold px-8 py-4 rounded-full transition-all duration-300 shadow-xl shadow-white/5"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#f5f5f7] active:scale-95 text-black text-sm sm:text-base font-semibold px-8 py-4 rounded-full transition-all duration-300 shadow-xl shadow-white/5"
             >
               Comprar ahora
               <ChevronRightIcon className="w-5 h-5" />
@@ -82,8 +82,8 @@ export default function HeroSection({ product, onOpen }) {
           </div>
 
           {/* Imagen Hero */}
-          <div className="relative flex items-center justify-center md:justify-end animate-fade-in stagger-3">
-            <div className="relative w-full max-w-[320px] sm:max-w-[400px] aspect-square flex items-center justify-center">
+          <div className="relative flex items-center justify-center md:justify-end animate-fade-in stagger-3 order-first md:order-none">
+            <div className="relative w-full max-w-[200px] sm:max-w-[400px] aspect-square flex items-center justify-center">
               {/* Brillo detrás de la imagen */}
               <div className="absolute inset-0 bg-white/5 rounded-full blur-3xl scale-75 group-hover:scale-100 transition-transform duration-700" />
               <img

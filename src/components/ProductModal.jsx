@@ -58,7 +58,7 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
 
       {/* Panel del modal */}
       <div
-        className="relative w-full sm:max-w-3xl max-h-[96vh] sm:max-h-[88vh]
+        className="relative w-full sm:max-w-3xl max-h-[92dvh] sm:max-h-[88vh]
                    bg-white dark:bg-[#1c1c1e]
                    rounded-t-3xl sm:rounded-2xl
                    overflow-hidden flex flex-col animate-slide-up"
@@ -105,7 +105,7 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
           </div>
 
           {/* Detalle */}
-          <div className="sm:w-3/5 p-6 sm:p-8 overflow-y-auto">
+          <div className="sm:w-3/5 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto">
 
             {/* Tag + nombre */}
             {product.tag && (
@@ -228,7 +228,7 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
             </div>
 
             {/* Precio + CTA */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <p className="text-2xl font-semibold text-[#1d1d1f] dark:text-white">
                   {formatPrice(product.precio)}
@@ -243,7 +243,7 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
                 {/* Botón comprar — solo UI, aparece si la gestión es automática y hay stock */}
                 {isAutomatic && stockVisible && totalStock > 0 && (
                   <button
-                    className="bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-sm font-semibold px-5 py-3 rounded-full transition-all duration-200"
+                    className="flex-shrink-0 bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-sm font-semibold px-5 py-3.5 rounded-full transition-all duration-200"
                   >
                     Comprar
                   </button>
@@ -252,8 +252,8 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
                   href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[#25d366] hover:bg-[#22c55e] active:scale-95
-                             text-white text-sm font-semibold px-5 py-3 rounded-full
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#25d366] hover:bg-[#22c55e] active:scale-95
+                             text-white text-sm font-semibold px-5 py-3.5 rounded-full
                              transition-all duration-200 shadow-lg shadow-green-500/20"
                 >
                   <WhatsAppIcon className="w-5 h-5" />

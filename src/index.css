@@ -10,9 +10,18 @@
   html {
     scroll-behavior: smooth;
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* Evita que iOS/Android reescalen el texto al rotar o hacer zoom */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   body {
     font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* Corta el rebote elástico vertical en móvil */
+    overscroll-behavior-y: none;
+  }
+  /* Sin flash gris al tocar elementos interactivos en móvil */
+  button, a, [role='button'] {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
@@ -35,6 +44,13 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+  /* Respeta el home indicator / notch de iOS */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
   }
 }
 
