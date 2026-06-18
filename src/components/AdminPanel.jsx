@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { CATEGORIES, MODEL_CATEGORIES, MODELS, DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
-import { XIcon } from './Icons'
+import { XIcon, ChevronLeftIcon } from './Icons'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
 const ADMIN_PASSWORD = 'eleeme2024'
@@ -304,7 +304,11 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       
       {/* Header Panel */}
       <header className="bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 px-4 sm:px-6 py-4 flex items-center justify-between flex-shrink-0 z-20">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button onClick={onClose} aria-label="Volver al inicio" className="flex items-center gap-1 pr-1 text-[#1d1d1f] dark:text-white hover:text-[#0071e3] transition-colors">
+            <ChevronLeftIcon className="w-6 h-6" />
+            <span className="text-sm font-medium hidden sm:inline">Inicio</span>
+          </button>
           <div className="w-8 h-8 rounded-full bg-[#0071e3] flex items-center justify-center text-white text-xs font-black">E</div>
           <div>
             <h1 className="font-black text-sm sm:text-lg tracking-tighter dark:text-white leading-tight uppercase">ADMIN ELEEME</h1>

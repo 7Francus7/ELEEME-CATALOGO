@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { SearchIcon, XIcon, SunIcon, MoonIcon } from './Icons'
+import { SearchIcon, XIcon, SunIcon, MoonIcon, ChevronLeftIcon } from './Icons'
 
 export default function Header({
   categories,
@@ -12,6 +12,7 @@ export default function Header({
   onSearchChange,
   isDark,
   onToggleDark,
+  onGoHome,
 }) {
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -20,6 +21,9 @@ export default function Header({
     onSearchChange('')
   }
 
+  // Estamos en el inicio cuando no hay categoría filtrada ni búsqueda
+  const isHome = selectedCategory === 'Todos' && !searchQuery
+
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200/60 dark:border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,16 +31,28 @@ export default function Header({
         {/* Fila principal */}
         <div className="flex items-center h-14 gap-3">
 
+          {/* Flecha volver al inicio (cuando hay filtro o categoría activa) */}
+          {!searchOpen && !isHome && (
+            <button
+              onClick={onGoHome}
+              className="flex-shrink-0 flex items-center gap-1 -ml-1 pr-1 text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3] transition-colors"
+              aria-label="Volver al inicio"
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+              <span className="text-sm font-medium hidden sm:inline">Inicio</span>
+            </button>
+          )}
+
           {/* Logo ELEEME */}
           {!searchOpen && (
-            <a href="#" className="flex-shrink-0 select-none">
+            <button onClick={onGoHome} className="flex-shrink-0 select-none" aria-label="Inicio">
               <span
                 className="text-[#1d1d1f] dark:text-white"
                 style={{ fontWeight: 900, fontSize: '17px', letterSpacing: '-0.04em' }}
               >
                 ELEEME
               </span>
-            </a>
+            </button>
           )}
 
           {/* Buscador expandible */}

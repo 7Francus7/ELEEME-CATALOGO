@@ -37,6 +37,14 @@ export default function App() {
     setSelectedModel('Todos')
   }
 
+  // Volver al inicio: limpia categoría, modelo y búsqueda
+  const goHome = () => {
+    setSelectedCategory('Todos')
+    setSelectedModel('Todos')
+    setSearchQuery('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   // Registra un email para avisar cuando vuelva el stock de un producto.
   // Devuelve 'added' | 'duplicate' | 'invalid'
   const handleNotifyRestock = (productId, email) => {
@@ -123,6 +131,7 @@ export default function App() {
         onSearchChange={setSearchQuery}
         isDark={isDark}
         onToggleDark={toggleDark}
+        onGoHome={goHome}
       />
 
       <main>
