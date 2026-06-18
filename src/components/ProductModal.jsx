@@ -64,36 +64,29 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
                    overflow-hidden flex flex-col animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Botón atrás (izquierda) */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 left-4 z-20 flex items-center gap-1 pl-2 pr-3 h-9
-                     rounded-full bg-white dark:bg-[#1c1c1e]
-                     text-[#1d1d1f] dark:text-white
-                     shadow-md ring-1 ring-black/5 dark:ring-white/10
-                     hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] transition-colors text-sm font-semibold"
-          aria-label="Atrás"
-        >
-          <ChevronLeftIcon className="w-5 h-5" />
-          Atrás
-        </button>
-
-        {/* Botón cerrar (derecha) */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center
-                     rounded-full bg-white dark:bg-[#1c1c1e]
-                     text-[#1d1d1f] dark:text-white
-                     shadow-md ring-1 ring-black/5 dark:ring-white/10
-                     hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] transition-colors"
-          aria-label="Cerrar"
-        >
-          <XIcon className="w-4 h-4" />
-        </button>
-
-        {/* Tirante móvil */}
-        <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+        {/* Barra superior fija — siempre visible */}
+        <div className="flex items-center justify-between px-3 sm:px-4 h-12 flex-shrink-0
+                        border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e]">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1 pl-1 pr-2 py-1.5 rounded-full
+                       text-[#1d1d1f] dark:text-white hover:text-[#0071e3] dark:hover:text-[#0071e3]
+                       transition-colors text-sm font-semibold"
+            aria-label="Atrás"
+          >
+            <ChevronLeftIcon className="w-5 h-5" />
+            Atrás
+          </button>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 flex items-center justify-center rounded-full
+                       bg-[#f5f5f7] dark:bg-[#2c2c2e]
+                       text-[#6e6e73] dark:text-[#86868b]
+                       hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
+            aria-label="Cerrar"
+          >
+            <XIcon className="w-4 h-4" />
+          </button>
         </div>
 
         {/* Contenido principal — scroll interno */}
@@ -112,7 +105,7 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
           </div>
 
           {/* Detalle */}
-          <div className="sm:w-3/5 p-6 sm:p-8 pt-14 sm:pt-14 overflow-y-auto">
+          <div className="sm:w-3/5 p-6 sm:p-8 overflow-y-auto">
 
             {/* Tag + nombre */}
             {product.tag && (
