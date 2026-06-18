@@ -67,23 +67,25 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
         {/* Botón atrás (izquierda) */}
         <button
           onClick={onClose}
-          className="absolute top-4 left-4 z-10 flex items-center gap-1 pl-2 pr-3 h-8
-                     rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e]
-                     text-[#6e6e73] dark:text-[#86868b]
-                     hover:text-[#1d1d1f] dark:hover:text-white transition-colors text-sm font-medium"
+          className="absolute top-4 left-4 z-20 flex items-center gap-1 pl-2 pr-3 h-9
+                     rounded-full bg-white dark:bg-[#1c1c1e]
+                     text-[#1d1d1f] dark:text-white
+                     shadow-md ring-1 ring-black/5 dark:ring-white/10
+                     hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] transition-colors text-sm font-semibold"
           aria-label="Atrás"
         >
-          <ChevronLeftIcon className="w-4 h-4" />
+          <ChevronLeftIcon className="w-5 h-5" />
           Atrás
         </button>
 
         {/* Botón cerrar (derecha) */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center
-                     rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e]
-                     text-[#6e6e73] dark:text-[#86868b]
-                     hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
+          className="absolute top-4 right-4 z-20 w-9 h-9 flex items-center justify-center
+                     rounded-full bg-white dark:bg-[#1c1c1e]
+                     text-[#1d1d1f] dark:text-white
+                     shadow-md ring-1 ring-black/5 dark:ring-white/10
+                     hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] transition-colors"
           aria-label="Cerrar"
         >
           <XIcon className="w-4 h-4" />
