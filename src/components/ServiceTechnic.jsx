@@ -1,66 +1,122 @@
-import { ChevronRightIcon } from './Icons'
+import { WHATSAPP_NUMBER, INSTAGRAM_URL } from '../data/products'
+import {
+  WrenchIcon,
+  ScreenIcon,
+  BatteryIcon,
+  CameraIcon,
+  BackGlassIcon,
+  ChargingPortIcon,
+  ButtonIcon,
+  ChevronRightIcon,
+  InstagramIcon,
+} from './Icons'
+
+// Servicios de reparación. Cada uno abre WhatsApp con un mensaje pre-cargado.
+const REPAIRS = [
+  { icon: ScreenIcon,       nombre: 'Pantalla',      detalle: 'Cambio de display con garantía' },
+  { icon: BatteryIcon,      nombre: 'Batería',       detalle: 'Reemplazo y test de salud' },
+  { icon: CameraIcon,       nombre: 'Cámara',        detalle: 'Módulo trasero y frontal' },
+  { icon: BackGlassIcon,    nombre: 'Tapa trasera',  detalle: 'Vidrio posterior original' },
+  { icon: ChargingPortIcon, nombre: 'Pin de carga',  detalle: 'Limpieza y recambio de puerto' },
+  { icon: ButtonIcon,       nombre: 'Botones',       detalle: 'Volumen, encendido y Home' },
+]
+
+const waLink = (texto) =>
+  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`
 
 export default function ServiceTechnic() {
-  const services = [
-    { id: 1, name: 'Consultoría', description: 'Asesoría personalizada en accesorios' },
-    { id: 2, name: 'Garantía', description: 'Cobertura completa de tus productos' },
-    { id: 3, name: 'Soporte', description: 'Asistencia técnica profesional' },
-    { id: 4, name: 'Envío', description: 'Entregas rápidas y seguras' },
-  ]
-
   return (
-    <section className="pt-24 sm:pt-28 pb-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1c1c1e] via-[#2c2c2e] to-[#1a1a2e] min-h-[300px] sm:min-h-[520px] flex items-center group">
+    <section className="pt-20 sm:pt-24 pb-2 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
+      <div className="relative overflow-hidden rounded-[28px] bg-[#0a0a0c] border border-white/[0.06]">
 
-        {/* Luz de fondo dinámica */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#0071e3]/20 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-[-10%] left-[10%] w-[400px] h-[400px] bg-purple-500/10 rounded-full blur-[100px]" />
+        {/* Resplandor de fondo, sutil */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-32 -right-24 w-[460px] h-[460px] bg-[#0071e3]/[0.12] rounded-full blur-[130px]" />
+          <div className="absolute -bottom-40 -left-20 w-[420px] h-[420px] bg-indigo-500/[0.08] rounded-full blur-[120px]" />
         </div>
 
-        <div className="relative z-10 w-full p-6 sm:p-12 lg:p-16 animate-slide-up">
-          <div className="max-w-3xl">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-4 sm:mb-6 tracking-tight">
-              Servicio Técnico
+        <div className="relative z-10 px-6 py-10 sm:px-12 sm:py-14 lg:px-16">
+
+          {/* Encabezado */}
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] border border-white/10 pl-2 pr-3.5 py-1.5 mb-6">
+              <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#0071e3]/15">
+                <WrenchIcon className="w-3.5 h-3.5 text-[#0a84ff]" />
+              </span>
+              <span className="text-[11px] font-semibold tracking-[0.14em] uppercase text-white/70">
+                Servicio Técnico
+              </span>
+            </div>
+
+            <h1 className="text-[28px] leading-[1.1] sm:text-5xl font-semibold text-white tracking-tight mb-4">
+              Reparamos tu iPhone
+              <span className="block text-white/40">como nuevo.</span>
             </h1>
 
-            <p className="text-[#86868b] text-sm sm:text-lg mb-8 sm:mb-12 leading-relaxed max-w-2xl">
-              Atención especializada para tu ecosistema Apple. Contamos con profesionales dedicados a brindarte la mejor experiencia.
+            <p className="text-[15px] sm:text-[17px] leading-relaxed text-white/55 max-w-xl">
+              Repuestos de calidad, diagnóstico sin cargo y atención directa por WhatsApp.
+              Elegí qué necesitás y te respondemos al instante.
             </p>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {services.map((service) => (
-                <button
-                  key={service.id}
-                  className="group/service flex items-start gap-4 p-4 sm:p-6 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 text-left"
-                >
-                  <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#0071e3]/20 flex items-center justify-center group-hover/service:bg-[#0071e3]/30 transition-colors">
-                    <ChevronRightIcon className="w-6 h-6 text-[#0071e3] group-hover/service:translate-x-0.5 transition-transform" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm sm:text-base font-semibold text-white mb-1">
-                      {service.name}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-[#86868b] group-hover/service:text-[#a1a1a6] transition-colors">
-                      {service.description}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-8 sm:mt-12 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          {/* Grilla de reparaciones */}
+          <div className="mt-9 sm:mt-11 grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+            {REPAIRS.map(({ icon: Icon, nombre, detalle }) => (
               <a
-                href="https://wa.me/542644056880?text=Hola%2C%20quisiera%20consultar%20sobre%20servicio%20t%C3%A9cnico"
+                key={nombre}
+                href={waLink(`Hola! Quería consultar por la reparación de *${nombre}* de mi iPhone.`)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-[#25d366] hover:bg-[#20ba5a] active:scale-95 text-white text-sm sm:text-base font-semibold px-8 py-4 rounded-full transition-all duration-300 shadow-xl shadow-[#25d366]/20"
+                className="group relative flex items-center gap-3.5 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07]
+                           border border-white/[0.06] hover:border-white/[0.14] px-4 py-3.5 sm:px-5 sm:py-4
+                           transition-all duration-300 active:scale-[0.98]"
               >
-                Consultar por WhatsApp
-                <ChevronRightIcon className="w-5 h-5" />
+                <span className="flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-white/[0.06]
+                                 text-white/80 group-hover:text-[#0a84ff] group-hover:bg-[#0a84ff]/10 transition-colors duration-300">
+                  <Icon className="w-[22px] h-[22px]" />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-medium text-white tracking-tight">
+                    {nombre}
+                  </span>
+                  <span className="block text-[12px] text-white/45 truncate">
+                    {detalle}
+                  </span>
+                </span>
+
+                <ChevronRightIcon className="flex-shrink-0 w-4 h-4 text-white/25 group-hover:text-white/60
+                                             group-hover:translate-x-0.5 transition-all duration-300" />
               </a>
-            </div>
+            ))}
           </div>
+
+          {/* Acciones */}
+          <div className="mt-9 sm:mt-11 flex flex-col sm:flex-row sm:items-center gap-4">
+            <a
+              href={waLink('Hola! Mi iPhone tiene una falla y me gustaría un diagnóstico.')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 h-12 px-7 rounded-full
+                         bg-white text-black text-[15px] font-semibold tracking-tight
+                         hover:bg-white/90 active:scale-[0.97] transition-all duration-200"
+            >
+              Diagnosticar falla
+              <ChevronRightIcon className="w-4 h-4" />
+            </a>
+
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 h-12 px-2 sm:px-1
+                         text-[15px] font-medium text-white/60 hover:text-white transition-colors duration-200"
+            >
+              <InstagramIcon className="w-[18px] h-[18px]" />
+              Ver más en Instagram
+            </a>
+          </div>
+
         </div>
       </div>
     </section>

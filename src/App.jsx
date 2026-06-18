@@ -60,9 +60,6 @@ export default function App() {
     return 'added'
   }
 
-  // Producto destacado para el hero (primero con destacado: true)
-  const heroProduct = useMemo(() => products.find((p) => p.destacado), [products])
-
   // El filtro por modelo solo aplica en categorías de Fundas / Protectores
   const modelFilterActive = MODEL_CATEGORIES.includes(selectedCategory) && !searchQuery
 
@@ -90,10 +87,6 @@ export default function App() {
         p.descripcion.toLowerCase().includes(q) ||
         p.compatible_con.toLowerCase().includes(q) ||
         p.categoria.toLowerCase().includes(q)
-
-      // Si es la vista 'Todos' y no hay búsqueda, ocultamos el destacado de la grilla
-      // para que no aparezca duplicado (ya que está en el Hero)
-      if (selectedCategory === 'Todos' && !q && p.destacado) return false
 
       return matchesCategory && matchesModel && matchesSearch
     })
@@ -138,13 +131,14 @@ export default function App() {
         {showHero && (
           <ServiceTechnic />
         )}
-        <div className={showHero ? '' : (modelsForCategory.length > 0 ? 'pt-40 sm:pt-44' : 'pt-28 sm:pt-32')}>
+        <div className={showHero ? 'pt-8 sm:pt-12' : (modelsForCategory.length > 0 ? 'pt-40 sm:pt-44' : 'pt-28 sm:pt-32')}>
           <ProductGrid
             products={filteredProducts}
             onOpen={setSelectedProduct}
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
             activeModel={activeModel}
+            showTitle={showHero}
             onClearSearch={() => { handleCategoryChange('Todos'); setSearchQuery('') }}
           />
         </div>

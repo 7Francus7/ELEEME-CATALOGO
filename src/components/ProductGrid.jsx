@@ -1,6 +1,6 @@
 import ProductCard from './ProductCard'
 
-export default function ProductGrid({ products, onOpen, searchQuery, selectedCategory, activeModel, onClearSearch }) {
+export default function ProductGrid({ products, onOpen, searchQuery, selectedCategory, activeModel, showTitle, onClearSearch }) {
   if (products.length === 0) {
     const hasFilter = searchQuery || (selectedCategory && selectedCategory !== 'Todos')
     return (
@@ -28,10 +28,15 @@ export default function ProductGrid({ products, onOpen, searchQuery, selectedCat
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-sm font-medium text-[#6e6e73] dark:text-[#86868b]">
-          {products.length} {products.length === 1 ? 'producto disponible' : 'productos disponibles'}
-        </h2>
+      <div className="flex items-baseline justify-between gap-3 mb-5 sm:mb-6">
+        {showTitle ? (
+          <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+            Catálogo
+          </h2>
+        ) : <span />}
+        <span className="text-[13px] font-medium text-[#86868b] whitespace-nowrap">
+          {products.length} {products.length === 1 ? 'producto' : 'productos'}
+        </span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">

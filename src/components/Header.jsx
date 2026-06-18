@@ -96,22 +96,27 @@ export default function Header({
           </div>
         </div>
 
-        {/* Categorías - Layout Grid */}
+        {/* Chips de categorías (scroll horizontal, estilo iOS) */}
         {!searchOpen && (
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 pb-4 animate-slide-down">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => onCategoryChange(cat)}
-                className={`py-2.5 px-3 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 flex flex-col items-center justify-center gap-1 min-h-[60px] sm:min-h-[70px] ${
-                  selectedCategory === cat
-                    ? 'bg-[#0071e3] text-white shadow-lg shadow-[#0071e3]/30'
-                    : 'bg-[#f5f5f7] dark:bg-[#1c1c1e] text-[#1d1d1f] dark:text-[#86868b] hover:bg-gray-300 dark:hover:bg-[#2c2c2e]'
-                }`}
-              >
-                <span className="line-clamp-2 text-center">{cat}</span>
-              </button>
-            ))}
+          <div className="flex gap-2 pb-3 -mx-1 px-1 overflow-x-auto scrollbar-hide">
+            {categories.map((cat) => {
+              const active = selectedCategory === cat
+              return (
+                <button
+                  key={cat}
+                  onClick={() => onCategoryChange(cat)}
+                  aria-pressed={active}
+                  className={`flex-shrink-0 h-8 px-4 rounded-full text-[13px] font-medium tracking-tight
+                              transition-all duration-200 active:scale-[0.96] ${
+                    active
+                      ? 'bg-[#1d1d1f] dark:bg-white text-white dark:text-black shadow-sm'
+                      : 'bg-black/[0.04] dark:bg-white/[0.08] text-[#1d1d1f] dark:text-white/80 hover:bg-black/[0.07] dark:hover:bg-white/[0.12]'
+                  }`}
+                >
+                  {cat}
+                </button>
+              )
+            })}
           </div>
         )}
 
@@ -123,7 +128,7 @@ export default function Header({
             </span>
             <button
               onClick={() => onModelChange('Todos')}
-              className={`flex-shrink-0 px-3.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
+              className={`flex-shrink-0 inline-flex items-center h-8 px-3.5 rounded-full text-[13px] font-medium tracking-tight border transition-all duration-200 active:scale-[0.96] ${
                 selectedModel === 'Todos'
                   ? 'bg-[#0071e3] border-[#0071e3] text-white'
                   : 'bg-transparent border-gray-200 dark:border-white/10 text-[#6e6e73] dark:text-[#86868b] hover:border-[#0071e3]'
@@ -135,7 +140,7 @@ export default function Header({
               <button
                 key={model}
                 onClick={() => onModelChange(model)}
-                className={`flex-shrink-0 px-3.5 py-1 rounded-full text-xs font-medium transition-all duration-200 border ${
+                className={`flex-shrink-0 inline-flex items-center h-8 px-3.5 rounded-full text-[13px] font-medium tracking-tight border transition-all duration-200 active:scale-[0.96] ${
                   selectedModel === model
                     ? 'bg-[#0071e3] border-[#0071e3] text-white'
                     : 'bg-transparent border-gray-200 dark:border-white/10 text-[#6e6e73] dark:text-[#86868b] hover:border-[#0071e3]'
