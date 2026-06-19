@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import {
   formatPrice,
-  WHATSAPP_NUMBER,
   usesModels,
   activeColors,
   colorStock,
   modelStock,
 } from '../data/products'
+import { WHATSAPP_NUMBER } from '../data/catalogConfig'
 import { XIcon, WhatsAppIcon, ChevronLeftIcon } from './Icons'
 
 export default function ProductModal({ product, activeModel, onNotifyRestock, onClose }) {

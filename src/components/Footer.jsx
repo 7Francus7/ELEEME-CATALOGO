@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { WhatsAppIcon, InstagramIcon } from './Icons'
-import { WHATSAPP_NUMBER, INSTAGRAM_URL } from '../data/products'
+import { WHATSAPP_NUMBER, INSTAGRAM_URL } from '../data/catalogConfig'
 
 export default function Footer({ onAdminOpen }) {
   const year = new Date().getFullYear()

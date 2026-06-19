@@ -1,5 +1,5 @@
 // ─── CONFIGURACIÓN ────────────────────────────────────────────────────────────
-export const WHATSAPP_NUMBER = '542644056880'
+export const WHATSAPP_NUMBER = '5492645588337'
 export const INSTAGRAM_URL = 'https://www.instagram.com/eleeme.st.acc/'
 
 // Categorías principales del catálogo (la primera, 'Todos', es la vista inicial)
@@ -241,7 +241,7 @@ export const products = [
   {
     id: 5,
     nombre: 'Protector de Cámara Vidrio Templado',
-    categoria: 'Protectores de cámara',
+    categoria: 'Vidrio templado',
     precio: 6999,
     precio_original: 8999,
     modelos: [
@@ -335,7 +335,7 @@ export const products = [
   {
     id: 8,
     nombre: 'Cable USB-C a Lightning 1 m',
-    categoria: 'Cargadores',
+    categoria: 'Cables',
     precio: 9999,
     precio_original: null,
     modelos: [],
@@ -386,7 +386,7 @@ export const products = [
   {
     id: 10,
     nombre: 'Soporte Anillo MagSafe',
-    categoria: 'Accesorios',
+    categoria: 'T Grip',
     precio: 8999,
     precio_original: null,
     modelos: [],
@@ -413,7 +413,7 @@ export const products = [
   {
     id: 11,
     nombre: 'AirPods Pro (2ª generación)',
-    categoria: 'Accesorios',
+    categoria: 'Auriculares',
     precio: 189999,
     precio_original: 219999,
     modelos: [],

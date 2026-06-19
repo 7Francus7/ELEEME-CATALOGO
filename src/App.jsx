@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { CATEGORIES, MODEL_CATEGORIES, availableModelsFor } from './data/products'
+import { CATEGORIES, MODEL_CATEGORIES, availableModelsFor } from './data/catalogConfig'
 import { useProducts } from './hooks/useProducts'
 import Header from './components/Header'
 import ServiceTechnic from './components/ServiceTechnic'

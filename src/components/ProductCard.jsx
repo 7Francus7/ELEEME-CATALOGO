@@ -1,4 +1,5 @@
-import { formatPrice, WHATSAPP_NUMBER, hasStock } from '../data/products'
+import { formatPrice, hasStock, activeColors } from '../data/products'
+import { WHATSAPP_NUMBER } from '../data/catalogConfig'
 import { WhatsAppIcon } from './Icons'
 
 export default function ProductCard({ product, onOpen, activeModel }) {
@@ -12,6 +13,9 @@ export default function ProductCard({ product, onOpen, activeModel }) {
 
   // Badge de stock solo cuando hay un modelo filtrado (null = no mostrar)
   const inStock = activeModel ? hasStock(product, activeModel) : null
+  const colors = activeColors(product)
+  const visibleColors = colors.slice(0, 10)
+  const extraColors = colors.length - visibleColors.length
 
   return (
     <article
@@ -74,6 +78,24 @@ export default function ProductCard({ product, onOpen, activeModel }) {
           <p className="text-xs text-[#86868b] dark:text-[#86868b] mb-4 line-clamp-2 leading-relaxed">
             {product.compatible_con}
           </p>
+          {visibleColors.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center -space-x-1.5">
+                {visibleColors.map((color) => (
+                  <span
+                    key={color.nombre}
+                    title={color.nombre}
+                    className="h-4 w-4 rounded-full border border-white dark:border-[#1c1c1e] shadow-sm"
+                    style={{ backgroundColor: color.codigo }}
+                  />
+                ))}
+              </div>
+              <span className="text-[11px] font-medium text-[#86868b]">
+                {colors.length} {colors.length === 1 ? 'color' : 'colores'}
+                {extraColors > 0 ? ` (+${extraColors})` : ''}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-2 pt-4 border-t border-gray-50 dark:border-white/5">

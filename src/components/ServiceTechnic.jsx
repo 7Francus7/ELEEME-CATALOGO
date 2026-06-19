@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMBER, INSTAGRAM_URL } from '../data/products'
+import { WHATSAPP_NUMBER, INSTAGRAM_URL } from '../data/catalogConfig'
 import {
   ScreenIcon,
   BatteryIcon,

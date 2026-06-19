@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { CATEGORIES, MODEL_CATEGORIES, MODELS, DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
+import { DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
+import { ADMIN_CATEGORIES, COLOR_PRESETS, MODEL_CATEGORIES, MODELS } from '../data/catalogConfig'
 import { XIcon, ChevronLeftIcon } from './Icons'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
@@ -201,6 +202,32 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
     ...prev,
     colores: [...(prev.colores || []), { nombre: 'Nuevo color', codigo: '#888888', activo: true }],
   }))
+
+  const togglePresetColor = (preset) => setForm((prev) => {
+    const colores = [...(prev.colores || [])]
+    const existingIndex = colores.findIndex(
+      (color) => color.nombre.trim().toLowerCase() === preset.nombre.toLowerCase()
+    )
+
+    if (existingIndex >= 0) {
+      const target = colores[existingIndex]
+      const nextColors = colores.filter((_, index) => index !== existingIndex)
+      const stock = Object.fromEntries(
+        Object.entries(prev.stock || {}).map(([key, byColor]) => {
+          const nextByColor = { ...byColor }
+          delete nextByColor[target.nombre]
+          return [key, nextByColor]
+        })
+      )
+
+      return { ...prev, colores: nextColors, stock }
+    }
+
+    return {
+      ...prev,
+      colores: [...colores, { ...preset, activo: true }],
+    }
+  })
 
   // Claves de stock: por modelo (Fundas/Protectores) o una única para el resto
   const stockKeys =
@@ -431,7 +458,7 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                   <div>
                     <label className="admin-label">Categoría *</label>
                     <select className="admin-input appearance-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1rem' }} value={form.categoria} onChange={f('categoria')}>
-                      {CATEGORIES.filter(c => c !== 'Todos').map(c => <option key={c}>{c}</option>)}
+                      {ADMIN_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
@@ -480,7 +507,38 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
 
                 {/* Colores */}
                 <div>
-                  <h3 className="text-xs font-black uppercase text-[#86868b] tracking-tighter mb-4">Colores disponibles</h3>
+                  <div className="flex flex-col gap-2 mb-4">
+                    <h3 className="text-xs font-black uppercase text-[#86868b] tracking-tighter">Colores disponibles</h3>
+                    <p className="text-[11px] text-[#86868b]">Tocá burbujas para sumar o sacar colores rápidos. Después podés ajustar nombre o código si hace falta.</p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {COLOR_PRESETS.map((preset) => {
+                      const active = (form.colores || []).some(
+                        (color) => color.nombre.trim().toLowerCase() === preset.nombre.toLowerCase()
+                      )
+
+                      return (
+                        <button
+                          key={preset.nombre}
+                          type="button"
+                          onClick={() => togglePresetColor(preset)}
+                          className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-[11px] font-semibold transition-all ${
+                            active
+                              ? 'border-[#0071e3] bg-blue-50 text-[#0071e3] dark:bg-blue-500/10'
+                              : 'border-gray-200 bg-white text-[#6e6e73] hover:border-[#0071e3] dark:border-white/10 dark:bg-[#1c1c1e] dark:text-[#86868b]'
+                          }`}
+                        >
+                          <span
+                            className="h-4 w-4 rounded-full border border-black/10 dark:border-white/20"
+                            style={{ backgroundColor: preset.codigo }}
+                          />
+                          {preset.nombre}
+                        </button>
+                      )
+                    })}
+                  </div>
+
                   <div className="space-y-3">
                     {(form.colores || []).map((c, i) => (
                       <div key={i} className="flex items-center gap-3 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-3">
