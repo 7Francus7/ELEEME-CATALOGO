@@ -24,7 +24,7 @@ const waLink = (texto) =>
 
 export default function ServiceTechnic() {
   return (
-    <section className="pt-20 sm:pt-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
+    <section className="pt-24 sm:pt-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
       <div className="rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.06] px-6 py-8 sm:px-10 sm:py-10">
 
         {/* Encabezado */}
