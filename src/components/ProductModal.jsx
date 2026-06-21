@@ -30,6 +30,10 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
     `Hola! Me interesa el ${product.nombre} (${formatPrice(product.precio)}). ¿Podés darme más información?`
   )
 
+  // Video: archivo directo (mp4/webm…) se reproduce en línea; redes sociales abren en pestaña nueva
+  const videoUrl = product.video_url?.trim()
+  const isFileVideo = videoUrl && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(videoUrl)
+
   // ── Lógica de stock / colores ──────────────────────────────────────────────
   const colores = activeColors(product)
   // Para productos con modelos hace falta un modelo elegido; los demás usan stock fijo
@@ -93,11 +97,13 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
         <div className="flex flex-col sm:flex-row overflow-y-auto sm:overflow-hidden flex-1">
 
           {/* Imagen */}
-          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex items-center justify-center p-8 min-h-56 sm:min-h-full flex-shrink-0">
+          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 overflow-hidden">
             <img
               src={product.imagen_url}
               alt={product.nombre}
-              className="max-w-full max-h-64 sm:max-h-80 object-contain"
+              className={`w-full h-64 sm:h-full ${
+                product.imagen_ajuste === 'contain' ? 'object-contain p-8' : 'object-cover'
+              }`}
               onError={(e) => {
                 e.target.src = `https://placehold.co/400x400/f5f5f7/86868b?text=${encodeURIComponent(product.nombre)}`
               }}
@@ -216,6 +222,34 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
                 {product.descripcion}
               </p>
             </div>
+
+            {/* Video del producto */}
+            {videoUrl && (
+              <div className="mb-6">
+                <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73] dark:text-[#86868b] mb-2">
+                  Video del producto
+                </h3>
+                {isFileVideo ? (
+                  <video
+                    src={videoUrl}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="w-full rounded-xl bg-black max-h-72 object-contain"
+                  />
+                ) : (
+                  <a
+                    href={videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-[#1d1d1f] dark:bg-white dark:text-black text-white text-sm font-semibold px-4 py-3 rounded-xl active:scale-95 transition-all"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    Ver video
+                  </a>
+                )}
+              </div>
+            )}
 
             {/* Por qué lo necesitás */}
             <div className="bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-xl p-4 mb-6">

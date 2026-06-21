@@ -17,6 +17,10 @@ export default function ProductCard({ product, onOpen, activeModel }) {
   const visibleColors = colors.slice(0, 10)
   const extraColors = colors.length - visibleColors.length
 
+  // Por defecto la foto rellena todo el recuadro (sin bordes). 'contain' la muestra completa.
+  const fitContain = product.imagen_ajuste === 'contain'
+  const hasVideo = !!product.video_url
+
   return (
     <article
       onClick={() => onOpen(product)}
@@ -26,16 +30,26 @@ export default function ProductCard({ product, onOpen, activeModel }) {
                  transition-all duration-500 hover:-translate-y-1.5 flex flex-col h-full"
     >
       {/* Imagen */}
-      <div className="aspect-square bg-[#fbfbfd] dark:bg-[#2c2c2e] overflow-hidden relative flex items-center justify-center p-6">
+      <div className="aspect-square bg-[#fbfbfd] dark:bg-[#2c2c2e] overflow-hidden relative">
         <img
           src={product.imagen_url}
           alt={product.nombre}
-          className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out drop-shadow-sm"
+          className={`w-full h-full group-hover:scale-110 transition-transform duration-700 ease-out ${
+            fitContain ? 'object-contain p-6 drop-shadow-sm' : 'object-cover'
+          }`}
           onError={(e) => {
             e.target.src = `https://placehold.co/400x400/f5f5f7/86868b?text=${encodeURIComponent(product.nombre)}`
           }}
         />
-        
+
+        {/* Indicador de video disponible */}
+        {hasVideo && (
+          <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[9px] font-bold bg-black/55 text-white px-2 py-1 rounded-full backdrop-blur-md">
+            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            VIDEO
+          </span>
+        )}
+
         {/* Badge superior (Tag) */}
         {product.tag && (
           <div className="absolute top-3 right-3">

@@ -15,6 +15,8 @@ const EMPTY_FORM = {
   compatible_con: '',
   modelos: [],
   imagen_url: '',
+  imagen_ajuste: 'cover',
+  video_url: '',
   descripcion: '',
   por_que_lo_necesitas: '',
   destacado: false,
@@ -754,7 +756,7 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                   <div className="w-48 h-48 bg-[#fbfbfd] dark:bg-[#2c2c2e] rounded-[24px] flex items-center justify-center border-2 border-dashed border-gray-100 dark:border-white/5 overflow-hidden group relative">
                     {form.imagen_url ? (
                       <>
-                        <img src={form.imagen_url} className="w-full h-full object-contain p-4 transition-transform group-hover:scale-105" />
+                        <img src={form.imagen_url} className={`w-full h-full transition-transform group-hover:scale-105 ${form.imagen_ajuste === 'contain' ? 'object-contain p-4' : 'object-cover'}`} />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <button type="button" onClick={() => setForm(p => ({...p, imagen_url: ''}))} className="bg-white text-black text-[10px] font-black px-3 py-1.5 rounded-full shadow-xl">QUITAR</button>
                         </div>
@@ -776,6 +778,47 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                     <p className="text-[10px] text-[#86868b] font-medium text-center italic">Tip: recomendamos imágenes con fondo blanco o transparente.</p>
                     <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
                   </div>
+                </div>
+
+                {/* Cómo se muestra la foto en el recuadro */}
+                <div className="mt-8 pt-6 border-t border-gray-100 dark:border-white/5">
+                  <label className="admin-label mb-3 block">¿Cómo se ve la foto en el recuadro?</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { val: 'cover', titulo: 'Rellenar recuadro', desc: 'La foto ocupa todo el cuadro, sin bordes. Puede recortar un poco los costados.' },
+                      { val: 'contain', titulo: 'Mostrar completa', desc: 'Se ve la foto entera, sin recortar. Puede dejar bordes alrededor.' },
+                    ].map((opt) => {
+                      const active = (form.imagen_ajuste || 'cover') === opt.val
+                      return (
+                        <button
+                          key={opt.val}
+                          type="button"
+                          onClick={() => setForm((p) => ({ ...p, imagen_ajuste: opt.val }))}
+                          className={`text-left p-4 rounded-2xl border-2 transition-all ${active ? 'border-[#0071e3] bg-blue-50/50 dark:bg-blue-500/10' : 'border-gray-100 dark:border-white/10 hover:border-[#0071e3]/40'}`}
+                        >
+                          <p className={`text-sm font-bold ${active ? 'text-[#0071e3]' : 'text-[#1d1d1f] dark:text-white'}`}>
+                            {active ? '● ' : '○ '}{opt.titulo}
+                          </p>
+                          <p className="text-[11px] text-[#86868b] mt-1 leading-relaxed">{opt.desc}</p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Video del producto (opcional) */}
+                <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
+                  <label className="admin-label mb-2 block">Video del producto (opcional)</label>
+                  <input
+                    type="text"
+                    className="admin-input text-sm py-4"
+                    value={form.video_url || ''}
+                    onChange={f('video_url')}
+                    placeholder="Pegá el link del video (Instagram, YouTube, TikTok o .mp4)"
+                  />
+                  <p className="text-[11px] text-[#86868b] mt-2 leading-relaxed">
+                    Subí el videíto a tu Instagram/YouTube/TikTok y pegá el link acá. Un link directo a un archivo <code>.mp4</code> se reproduce dentro del catálogo; los demás abren el video en una pestaña nueva.
+                  </p>
                 </div>
               </div>
 

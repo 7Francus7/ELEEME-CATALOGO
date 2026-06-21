@@ -91,6 +91,8 @@ export const hasStock = (product, model) => {
 //   modelos → array de modelos compatibles; habilita el filtro por modelo (solo Fundas / Protectores)
 //   compatible_con → texto legible que se muestra en la card y el modal
 //   imagen_url → reemplazar con fotos reales del cliente
+//   imagen_ajuste → 'cover' (rellena el recuadro, por defecto) | 'contain' (muestra la foto completa)
+//   video_url → link opcional a un video (.mp4 se reproduce inline; redes sociales abren en pestaña)
 //   colores → [{ nombre, codigo (hex), activo }]
 //   stock → { [modelo|DEFAULT_STOCK_KEY]: { [nombreColor]: cantidad } }
 //   notificar_cuando_stock → emails que esperan aviso de restock
