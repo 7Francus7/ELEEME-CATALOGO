@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
-import { ADMIN_CATEGORIES, COLOR_PRESETS, MODEL_CATEGORIES, MODELS } from '../data/catalogConfig'
+import { COLOR_PRESETS, MODEL_CATEGORIES, MODELS } from '../data/catalogConfig'
 import { putVideo, deleteVideo } from '../utils/videoStore'
 import { XIcon, ChevronLeftIcon } from './Icons'
 
@@ -72,8 +72,133 @@ const DuplicateIcon = ({ className }) => (
   </svg>
 )
 
-export default function AdminPanel({ products, onSave, onReset, onClose }) {
+// ─── GESTOR DE CATEGORÍAS ─────────────────────────────────────────────────────
+// Permite al cliente agregar, renombrar, reordenar y borrar las categorías que se
+// muestran en el catálogo. Al renombrar, mueve también los productos a la nueva.
+function CategoryManager({ categories, products, onSaveProducts, onSaveCategories, onReset, onClose }) {
+  const [list, setList] = useState(() => categories.map((nombre) => ({ nombre, original: nombre })))
+  const [nuevo, setNuevo] = useState('')
+  const [error, setError] = useState('')
+
+  const countFor = (name) => products.filter((p) => p.categoria === name).length
+
+  const addCategory = () => {
+    const name = nuevo.trim()
+    if (!name) return
+    if (list.some((c) => c.nombre.trim().toLowerCase() === name.toLowerCase())) {
+      setError('Esa categoría ya existe')
+      return
+    }
+    setList((prev) => [...prev, { nombre: name, original: null }])
+    setNuevo('')
+    setError('')
+  }
+
+  const rename = (index, value) => setList((prev) => prev.map((c, i) => (i === index ? { ...c, nombre: value } : c)))
+
+  const remove = (index) => {
+    const target = list[index]
+    const used = target.original ? countFor(target.original) : 0
+    if (used > 0 && !window.confirm(`Hay ${used} producto(s) en "${target.original}". Si la borrás, dejan de aparecer hasta que les cambies la categoría. ¿Borrar igual?`)) return
+    setList((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const move = (index, dir) => {
+    const j = index + dir
+    if (j < 0 || j >= list.length) return
+    setList((prev) => {
+      const next = [...prev]
+      ;[next[index], next[j]] = [next[j], next[index]]
+      return next
+    })
+  }
+
+  const save = () => {
+    const names = list.map((c) => c.nombre.trim()).filter(Boolean)
+    if (!names.length) {
+      setError('Tiene que quedar al menos una categoría')
+      return
+    }
+    const lower = names.map((n) => n.toLowerCase())
+    if (new Set(lower).size !== lower.length) {
+      setError('Hay categorías repetidas')
+      return
+    }
+    // Mapa de renombres para migrar los productos afectados
+    const renames = list
+      .filter((c) => c.original && c.nombre.trim() && c.nombre.trim() !== c.original)
+      .map((c) => [c.original, c.nombre.trim()])
+    if (renames.length) {
+      const map = Object.fromEntries(renames)
+      onSaveProducts(products.map((p) => (map[p.categoria] ? { ...p, categoria: map[p.categoria] } : p)))
+    }
+    onSaveCategories(names)
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-white dark:bg-[#1c1c1e] w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/10">
+          <div>
+            <h2 className="text-lg font-black dark:text-white tracking-tight">Categorías</h2>
+            <p className="text-[11px] text-[#86868b]">Las que se ven en el catálogo. Arrastrá el orden con ▲▼.</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-[#86868b] hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] rounded-full">
+            <XIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-2">
+          {list.map((c, i) => (
+            <div key={i} className="flex items-center gap-2 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl p-2">
+              <div className="flex flex-col">
+                <button type="button" onClick={() => move(i, -1)} className="px-1 text-gray-400 hover:text-[#0071e3] leading-none">▲</button>
+                <button type="button" onClick={() => move(i, 1)} className="px-1 text-gray-400 hover:text-[#0071e3] leading-none">▼</button>
+              </div>
+              <input
+                value={c.nombre}
+                onChange={(e) => rename(i, e.target.value)}
+                className="flex-1 min-w-0 bg-white dark:bg-[#1c1c1e] dark:text-white rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]/20"
+              />
+              {c.original && countFor(c.original) > 0 && (
+                <span className="text-[10px] font-bold text-[#86868b] whitespace-nowrap">{countFor(c.original)} prod.</span>
+              )}
+              <button type="button" onClick={() => remove(i)} className="p-2 text-gray-400 hover:text-red-500">
+                <TrashIcon className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              value={nuevo}
+              onChange={(e) => { setNuevo(e.target.value); setError('') }}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCategory())}
+              placeholder="Nueva categoría…"
+              className="flex-1 min-w-0 bg-[#f5f5f7] dark:bg-[#2c2c2e] dark:text-white rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]/20"
+            />
+            <button type="button" onClick={addCategory} className="text-xs font-black uppercase tracking-widest text-white bg-[#0071e3] px-4 py-2.5 rounded-xl active:scale-95 transition-all">
+              Agregar
+            </button>
+          </div>
+          {error && <p className="text-red-500 text-xs">{error}</p>}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 flex items-center gap-3">
+          <button type="button" onClick={onReset} className="text-xs font-bold text-[#86868b] hover:text-red-500">Restaurar predeterminadas</button>
+          <button type="button" onClick={save} className="ml-auto bg-black dark:bg-white dark:text-black text-white font-black uppercase tracking-widest text-xs px-6 py-3 rounded-2xl active:scale-95 transition-all">
+            Guardar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function AdminPanel({ products, onSave, onReset, categories, onSaveCategories, onResetCategories, onClose }) {
   const [authenticated, setAuthenticated] = useState(false)
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false)
   const [pwInput, setPwInput] = useState('')
   const [pwError, setPwError] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -113,7 +238,10 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
   }
 
   const handleNew = () => {
-    setForm(EMPTY_FORM)
+    const categoria = categories.includes(EMPTY_FORM.categoria)
+      ? EMPTY_FORM.categoria
+      : categories[0] || EMPTY_FORM.categoria
+    setForm({ ...EMPTY_FORM, categoria })
     setEditingId(null)
     setActiveView('form')
     setTimeout(() => formRef.current?.scrollTo({ top: 0, behavior: 'smooth' }), 50)
@@ -408,7 +536,7 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
           flex-1 min-h-0 lg:w-[420px] lg:flex-none border-r border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e] flex flex-col
           ${activeView === 'list' ? 'flex' : 'hidden lg:flex'}
         `}>
-          <div className="p-4 border-b border-gray-50 dark:border-white/5 flex-shrink-0">
+          <div className="p-4 border-b border-gray-50 dark:border-white/5 flex-shrink-0 space-y-3">
             <div className="relative group">
               <input
                 type="text"
@@ -419,6 +547,13 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0071e3] transition-colors">🔍</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setCategoryManagerOpen(true)}
+              className="w-full text-xs font-black uppercase tracking-widest text-[#0071e3] bg-blue-50 dark:bg-blue-500/10 py-3 rounded-2xl active:scale-95 transition-all"
+            >
+              🏷️ Editar categorías
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto overscroll-contain">
@@ -491,9 +626,14 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
                     <input className="admin-input" value={form.nombre} onChange={f('nombre')} required placeholder="Ej: iPhone 15 Pro Max" />
                   </div>
                   <div>
-                    <label className="admin-label">Categoría *</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="admin-label !mb-0">Categoría *</label>
+                      <button type="button" onClick={() => setCategoryManagerOpen(true)} className="text-[11px] font-black uppercase tracking-widest text-[#0071e3]">
+                        Editar categorías
+                      </button>
+                    </div>
                     <select className="admin-input appearance-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\' /%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1rem' }} value={form.categoria} onChange={f('categoria')}>
-                      {ADMIN_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      {(categories.includes(form.categoria) ? categories : [form.categoria, ...categories]).map((c) => <option key={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
@@ -903,6 +1043,17 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
           </div>
         </div>
       </div>
+
+      {categoryManagerOpen && (
+        <CategoryManager
+          categories={categories}
+          products={products}
+          onSaveProducts={onSave}
+          onSaveCategories={onSaveCategories}
+          onReset={onResetCategories}
+          onClose={() => setCategoryManagerOpen(false)}
+        />
+      )}
     </div>
   )
 }

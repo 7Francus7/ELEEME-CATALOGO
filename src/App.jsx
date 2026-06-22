@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
-import { CATEGORIES, MODEL_CATEGORIES, availableModelsFor } from './data/catalogConfig'
+import { MODEL_CATEGORIES, availableModelsFor } from './data/catalogConfig'
 import { useProducts } from './hooks/useProducts'
+import { useCategories } from './hooks/useCategories'
 import Header from './components/Header'
 import ServiceTechnic from './components/ServiceTechnic'
 import ProductGrid from './components/ProductGrid'
@@ -19,6 +20,10 @@ function initDark() {
 
 export default function App() {
   const { products, saveProducts, resetToDefaults } = useProducts()
+  const { categories, saveCategories, resetCategories } = useCategories()
+
+  // Lista que ve el visitante: 'Todos' siempre primero
+  const navCategories = useMemo(() => ['Todos', ...categories], [categories])
 
   const [selectedCategory, setSelectedCategory] = useState('Todos')
   const [selectedModel, setSelectedModel] = useState('Todos')
@@ -99,6 +104,13 @@ export default function App() {
     localStorage.setItem(DARK_KEY, String(next))
   }
 
+  // Si el cliente borra/renombra la categoría activa, volver a 'Todos'
+  useEffect(() => {
+    if (selectedCategory !== 'Todos' && !categories.includes(selectedCategory)) {
+      setSelectedCategory('Todos')
+    }
+  }, [categories, selectedCategory])
+
   // Bloquear scroll del body cuando el admin o modal están abiertos
   useEffect(() => {
     document.body.style.overflow = (adminOpen || selectedProduct) ? 'hidden' : ''
@@ -114,7 +126,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-black transition-colors duration-300">
       <Header
-        categories={CATEGORIES}
+        categories={navCategories}
         selectedCategory={selectedCategory}
         onCategoryChange={handleCategoryChange}
         models={modelsForCategory}
@@ -162,6 +174,9 @@ export default function App() {
           products={products}
           onSave={saveProducts}
           onReset={resetToDefaults}
+          categories={categories}
+          onSaveCategories={saveCategories}
+          onResetCategories={resetCategories}
           onClose={() => setAdminOpen(false)}
         />
       )}

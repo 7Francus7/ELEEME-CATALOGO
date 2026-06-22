@@ -1,16 +1,17 @@
 export const WHATSAPP_NUMBER = '5492645588337'
 export const INSTAGRAM_URL = 'https://www.instagram.com/eleeme.st.acc/'
 
-export const CATEGORIES = [
-  'Todos',
+// Categorías por defecto del catálogo (sin 'Todos', que se antepone siempre).
+// El cliente puede editar esta lista desde el panel admin; estos son los valores
+// iniciales si nunca tocó nada.
+export const DEFAULT_CATEGORIES = [
   'Fundas',
   'Cargadores',
   'Cables',
   'Vidrio templado',
   'Protectores de cámara',
-  'Straps',
+  'Correas',
   'Funda cargador',
-  'T Grip',
   'Auriculares',
   'Funda auriculares',
   'Reloj',
@@ -18,8 +19,6 @@ export const CATEGORIES = [
   'Battery pack',
   'JBL',
 ]
-
-export const ADMIN_CATEGORIES = [...CATEGORIES.filter((category) => category !== 'Todos'), 'Accesorios']
 
 export const MODEL_CATEGORIES = ['Fundas', 'Protectores de cámara', 'Vidrio templado']
 

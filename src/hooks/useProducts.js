@@ -1,31 +1,30 @@
 import { useState } from 'react'
 import { products as defaultProducts } from '../data/products'
-import { ADMIN_CATEGORIES, MODELS } from '../data/catalogConfig'
+import { MODELS } from '../data/catalogConfig'
 
 const STORAGE_KEY = 'eleeme_catalog_v4'
 const LEGACY_STORAGE_KEY = 'eleeme_catalog_v3'
-const VALID_CATEGORIES = new Set(ADMIN_CATEGORIES)
 const VALID_MODELS = new Set(MODELS)
 
 function inferLegacyCategory(product) {
   const name = `${product?.nombre || ''} ${product?.tag || ''}`.toLowerCase()
   if (name.includes('airpods') || name.includes('auricular')) return 'Auriculares'
-  if (name.includes('anillo') || name.includes('grip') || name.includes('soporte')) return 'T Grip'
+  if (name.includes('anillo') || name.includes('grip') || name.includes('soporte')) return 'Correas'
   if (name.includes('jbl')) return 'JBL'
   if (name.includes('cable') || name.includes('lightning') || name.includes('usb-c')) return 'Cables'
   if (name.includes('vidrio templado')) return 'Vidrio templado'
   if (name.includes('cámara')) return 'Protectores de cámara'
   if (name.includes('cargador') || name.includes('magsafe')) return 'Cargadores'
-  return product?.categoria || 'Fundas'
+  return 'Fundas'
 }
 
 function normalizeProduct(product) {
+  // Las categorías ahora son editables por el cliente, así que no se valida contra
+  // una lista fija: se respeta la categoría guardada. Solo se infiere si falta o
+  // si es el bucket genérico legacy 'Accesorios'.
+  const stored = product?.categoria
   const categoria =
-    product?.categoria === 'Accesorios'
-      ? inferLegacyCategory(product)
-      : VALID_CATEGORIES.has(product?.categoria)
-        ? product.categoria
-        : inferLegacyCategory(product)
+    stored && stored !== 'Accesorios' ? stored : inferLegacyCategory(product)
 
   const knownModels = []
   const extraModels = []

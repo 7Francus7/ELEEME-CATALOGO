@@ -1,0 +1,51 @@
+import { useState } from 'react'
+import { DEFAULT_CATEGORIES } from '../data/catalogConfig'
+
+const STORAGE_KEY = 'eleeme_categories_v1'
+
+// Limpia la lista: strings no vacíos, sin duplicados, sin 'Todos' (se antepone aparte)
+function sanitize(list) {
+  const seen = new Set()
+  const out = []
+  for (const raw of list || []) {
+    const name = String(raw || '').trim()
+    if (!name) continue
+    if (name.toLowerCase() === 'todos') continue
+    const key = name.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(name)
+  }
+  return out
+}
+
+// Carga las categorías guardadas; si no hay nada, usa los defaults.
+function loadCategories() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      const clean = sanitize(parsed)
+      if (clean.length) return clean
+    }
+  } catch {}
+  return [...DEFAULT_CATEGORIES]
+}
+
+export function useCategories() {
+  const [categories, setCategories] = useState(loadCategories)
+
+  const saveCategories = (next) => {
+    const clean = sanitize(next)
+    const final = clean.length ? clean : [...DEFAULT_CATEGORIES]
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(final))
+    setCategories(final)
+  }
+
+  const resetCategories = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    setCategories([...DEFAULT_CATEGORIES])
+  }
+
+  return { categories, saveCategories, resetCategories }
+}

@@ -13,13 +13,18 @@ import { XIcon, WhatsAppIcon, ChevronLeftIcon } from './Icons'
 export default function ProductModal({ product, activeModel, onNotifyRestock, onClose }) {
   const [email, setEmail] = useState('')
   const [notifyStatus, setNotifyStatus] = useState('') // '' | 'added' | 'duplicate' | 'invalid'
+  const [lightboxOpen, setLightboxOpen] = useState(false) // foto en pantalla completa
 
-  // Cerrar con Escape
+  // Cerrar con Escape (primero el lightbox si está abierto, después el modal)
   useEffect(() => {
-    const handleKey = (e) => { if (e.key === 'Escape') onClose() }
+    const handleKey = (e) => {
+      if (e.key !== 'Escape') return
+      if (lightboxOpen) setLightboxOpen(false)
+      else onClose()
+    }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  }, [onClose, lightboxOpen])
 
   // Bloquear scroll del body
   useEffect(() => {
@@ -114,18 +119,23 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
         {/* Contenido principal — scroll interno */}
         <div className="flex flex-col sm:flex-row overflow-y-auto sm:overflow-hidden flex-1">
 
-          {/* Imagen */}
-          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 overflow-hidden">
+          {/* Imagen — tocar para verla en grande */}
+          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 overflow-hidden relative group">
             <img
               src={product.imagen_url}
               alt={product.nombre}
-              className={`w-full h-64 sm:h-full ${
+              onClick={() => setLightboxOpen(true)}
+              className={`w-full h-64 sm:h-full cursor-zoom-in ${
                 product.imagen_ajuste === 'contain' ? 'object-contain p-8' : 'object-cover'
               }`}
               onError={(e) => {
                 e.target.src = `https://placehold.co/400x400/f5f5f7/86868b?text=${encodeURIComponent(product.nombre)}`
               }}
             />
+            <span className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white opacity-90 backdrop-blur-sm">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 8v6M8 11h6M19 11a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
+              Ampliar
+            </span>
           </div>
 
           {/* Detalle */}
@@ -316,6 +326,28 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
           </div>
         </div>
       </div>
+
+      {/* Lightbox: foto del producto en pantalla completa */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 animate-fade-in"
+          onClick={(e) => { e.stopPropagation(); setLightboxOpen(false) }}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false) }}
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            aria-label="Cerrar"
+          >
+            <XIcon className="w-5 h-5" />
+          </button>
+          <img
+            src={product.imagen_url}
+            alt={product.nombre}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-[90dvh] object-contain rounded-lg cursor-zoom-out select-none"
+          />
+        </div>
+      )}
     </div>
   )
 }

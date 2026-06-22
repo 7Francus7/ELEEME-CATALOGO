@@ -389,7 +389,7 @@ export const products = [
   {
     id: 10,
     nombre: 'Soporte Anillo MagSafe',
-    categoria: 'T Grip',
+    categoria: 'Correas',
     precio: 8999,
     precio_original: null,
     modelos: [],
