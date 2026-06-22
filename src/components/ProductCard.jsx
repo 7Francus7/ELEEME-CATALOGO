@@ -19,7 +19,7 @@ export default function ProductCard({ product, onOpen, activeModel }) {
 
   // Por defecto la foto rellena todo el recuadro (sin bordes). 'contain' la muestra completa.
   const fitContain = product.imagen_ajuste === 'contain'
-  const hasVideo = !!product.video_url
+  const hasVideo = !!product.video_url || !!product.video_storage_key
 
   return (
     <article

@@ -93,6 +93,7 @@ export const hasStock = (product, model) => {
 //   imagen_url → reemplazar con fotos reales del cliente
 //   imagen_ajuste → 'cover' (rellena el recuadro, por defecto) | 'contain' (muestra la foto completa)
 //   video_url → link opcional a un video (.mp4 se reproduce inline; redes sociales abren en pestaña)
+//   video_storage_key → clave del video subido al catálogo (el archivo vive en IndexedDB, ver utils/videoStore)
 //   colores → [{ nombre, codigo (hex), activo }]
 //   stock → { [modelo|DEFAULT_STOCK_KEY]: { [nombreColor]: cantidad } }
 //   notificar_cuando_stock → emails que esperan aviso de restock

@@ -33,7 +33,7 @@ export default function ServiceTechnic() {
         </p>
         <h1 className="text-[26px] sm:text-[34px] leading-[1.15] font-semibold tracking-tight text-[#1d1d1f] dark:text-white max-w-xl">
           Reparamos tu iPhone
-          <span className="text-[#86868b]"> con repuestos de calidad.</span>
+          <span className="text-[#86868b]"> Servicio técnico especializado.</span>
         </h1>
 
         {/* Chips de reparación */}
@@ -55,6 +55,11 @@ export default function ServiceTechnic() {
             </a>
           ))}
         </div>
+
+        {/* Modelos que trabajamos */}
+        <p className="mt-5 text-[13px] font-medium tracking-tight text-[#86868b]">
+          Todos los modelos, del iPhone 11 al iPhone 17 Pro Max.
+        </p>
 
         {/* Acciones */}
         <div className="mt-8 flex items-center gap-5">

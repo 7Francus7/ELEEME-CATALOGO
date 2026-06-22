@@ -7,6 +7,7 @@ import {
   modelStock,
 } from '../data/products'
 import { WHATSAPP_NUMBER } from '../data/catalogConfig'
+import { getVideo } from '../utils/videoStore'
 import { XIcon, WhatsAppIcon, ChevronLeftIcon } from './Icons'
 
 export default function ProductModal({ product, activeModel, onNotifyRestock, onClose }) {
@@ -33,6 +34,23 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
   // Video: archivo directo (mp4/webm…) se reproduce en línea; redes sociales abren en pestaña nueva
   const videoUrl = product.video_url?.trim()
   const isFileVideo = videoUrl && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(videoUrl)
+
+  // Video subido al catálogo (guardado en IndexedDB): se carga como object URL para reproducirlo
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState('')
+  useEffect(() => {
+    let objectUrl
+    if (product.video_storage_key) {
+      getVideo(product.video_storage_key).then((blob) => {
+        if (blob) {
+          objectUrl = URL.createObjectURL(blob)
+          setUploadedVideoUrl(objectUrl)
+        }
+      })
+    }
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [product.video_storage_key])
+
+  const hasVideo = uploadedVideoUrl || videoUrl
 
   // ── Lógica de stock / colores ──────────────────────────────────────────────
   const colores = activeColors(product)
@@ -224,14 +242,14 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
             </div>
 
             {/* Video del producto */}
-            {videoUrl && (
+            {hasVideo && (
               <div className="mb-6">
                 <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73] dark:text-[#86868b] mb-2">
                   Video del producto
                 </h3>
-                {isFileVideo ? (
+                {uploadedVideoUrl || isFileVideo ? (
                   <video
-                    src={videoUrl}
+                    src={uploadedVideoUrl || videoUrl}
                     controls
                     playsInline
                     preload="metadata"

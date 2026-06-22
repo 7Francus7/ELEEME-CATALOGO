@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
 import { ADMIN_CATEGORIES, COLOR_PRESETS, MODEL_CATEGORIES, MODELS } from '../data/catalogConfig'
+import { putVideo, deleteVideo } from '../utils/videoStore'
 import { XIcon, ChevronLeftIcon } from './Icons'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
@@ -17,6 +18,7 @@ const EMPTY_FORM = {
   imagen_url: '',
   imagen_ajuste: 'cover',
   video_url: '',
+  video_storage_key: '',
   descripcion: '',
   por_que_lo_necesitas: '',
   destacado: false,
@@ -77,11 +79,13 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [imageProcessing, setImageProcessing] = useState(false)
+  const [videoProcessing, setVideoProcessing] = useState(false)
   const [saveStatus, setSaveStatus] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeView, setActiveView] = useState('list') // 'list' | 'form'
-  
+
   const fileRef = useRef()
+  const videoFileRef = useRef()
   const formRef = useRef()
 
   const f = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))
@@ -117,6 +121,8 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
 
   const handleDelete = (id) => {
     if (!window.confirm('¿Eliminar este producto?')) return
+    const target = products.find((p) => p.id === id)
+    if (target?.video_storage_key) deleteVideo(target.video_storage_key)
     onSave(products.filter((p) => p.id !== id))
     if (editingId === id) {
       setEditingId(null)
@@ -163,6 +169,33 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
       setImageProcessing(false)
       e.target.value = ''
     }
+  }
+
+  // Guarda el video en IndexedDB (no en localStorage, que es chico) y referencia su clave
+  const handleVideoFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 60 * 1024 * 1024) {
+      alert('El video es muy pesado (máx 60 MB). Subí un clip más corto.')
+      e.target.value = ''
+      return
+    }
+    try {
+      setVideoProcessing(true)
+      const key = form.video_storage_key || `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+      await putVideo(key, file)
+      setForm((prev) => ({ ...prev, video_storage_key: key, video_url: '' }))
+    } catch {
+      alert('No se pudo guardar el video.')
+    } finally {
+      setVideoProcessing(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleRemoveVideo = async () => {
+    if (form.video_storage_key) await deleteVideo(form.video_storage_key)
+    setForm((prev) => ({ ...prev, video_storage_key: '', video_url: '' }))
   }
 
   // ── Gestión de colores ──────────────────────────────────────────────────────
@@ -808,16 +841,46 @@ export default function AdminPanel({ products, onSave, onReset, onClose }) {
 
                 {/* Video del producto (opcional) */}
                 <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
-                  <label className="admin-label mb-2 block">Video del producto (opcional)</label>
-                  <input
-                    type="text"
-                    className="admin-input text-sm py-4"
-                    value={form.video_url || ''}
-                    onChange={f('video_url')}
-                    placeholder="Pegá el link del video (Instagram, YouTube, TikTok o .mp4)"
-                  />
-                  <p className="text-[11px] text-[#86868b] mt-2 leading-relaxed">
-                    Subí el videíto a tu Instagram/YouTube/TikTok y pegá el link acá. Un link directo a un archivo <code>.mp4</code> se reproduce dentro del catálogo; los demás abren el video en una pestaña nueva.
+                  <label className="admin-label mb-3 block">Video del producto (opcional)</label>
+
+                  {form.video_storage_key ? (
+                    <div className="flex items-center justify-between gap-3 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl px-4 py-4">
+                      <span className="flex items-center gap-2 text-sm font-bold text-[#1d1d1f] dark:text-white">
+                        <svg className="w-5 h-5 text-[#0071e3]" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                        Video cargado ✓
+                      </span>
+                      <button type="button" onClick={handleRemoveVideo} className="text-[11px] font-black uppercase tracking-widest text-red-500 px-3 py-1.5 rounded-full active:scale-95 transition-all">
+                        Quitar
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => videoFileRef.current.click()}
+                        disabled={videoProcessing}
+                        className="w-full bg-[#1d1d1f] dark:bg-white dark:text-black text-white py-5 rounded-[20px] text-sm font-black uppercase tracking-widest active:scale-95 transition-all"
+                      >
+                        {videoProcessing ? 'SUBIENDO...' : 'SUBIR VIDEO DESDE EL CELULAR'}
+                      </button>
+                      <div className="flex items-center gap-3 my-4">
+                        <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">o pega un link</span>
+                        <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                      </div>
+                      <input
+                        type="text"
+                        className="admin-input text-sm py-4"
+                        value={form.video_url || ''}
+                        onChange={f('video_url')}
+                        placeholder="Link de Instagram, YouTube, TikTok o .mp4"
+                      />
+                    </>
+                  )}
+
+                  <input ref={videoFileRef} type="file" accept="video/*" className="hidden" onChange={handleVideoFile} />
+                  <p className="text-[11px] text-[#86868b] mt-3 leading-relaxed">
+                    Subí un clip corto (máx 60 MB) o pegá un link. Tip: videos de 5 a 15 segundos cargan más rápido.
                   </p>
                 </div>
               </div>
