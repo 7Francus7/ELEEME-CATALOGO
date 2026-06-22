@@ -1,6 +1,7 @@
-import { formatPrice, hasStock, activeColors } from '../data/products'
+import { formatPrice, hasStock, activeColors, productImages, productVideos } from '../data/products'
 import { WHATSAPP_NUMBER } from '../data/catalogConfig'
 import { WhatsAppIcon } from './Icons'
+import CatalogImage from './CatalogImage'
 
 export default function ProductCard({ product, onOpen, activeModel }) {
   const whatsappLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
@@ -19,7 +20,9 @@ export default function ProductCard({ product, onOpen, activeModel }) {
 
   // Por defecto la foto rellena todo el recuadro (sin bordes). 'contain' la muestra completa.
   const fitContain = product.imagen_ajuste === 'contain'
-  const hasVideo = !!product.video_url || !!product.video_storage_key
+  const images = productImages(product)
+  const cover = images[0]
+  const hasVideo = productVideos(product).length > 0
 
   return (
     <article
@@ -31,24 +34,30 @@ export default function ProductCard({ product, onOpen, activeModel }) {
     >
       {/* Imagen */}
       <div className="aspect-square bg-[#fbfbfd] dark:bg-[#2c2c2e] overflow-hidden relative">
-        <img
-          src={product.imagen_url}
+        <CatalogImage
+          src={cover}
           alt={product.nombre}
+          fallbackText={product.nombre}
           className={`w-full h-full group-hover:scale-110 transition-transform duration-700 ease-out ${
             fitContain ? 'object-contain p-6 drop-shadow-sm' : 'object-cover'
           }`}
-          onError={(e) => {
-            e.target.src = `https://placehold.co/400x400/f5f5f7/86868b?text=${encodeURIComponent(product.nombre)}`
-          }}
         />
 
-        {/* Indicador de video disponible */}
-        {hasVideo && (
-          <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[9px] font-bold bg-black/55 text-white px-2 py-1 rounded-full backdrop-blur-md">
-            <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-            VIDEO
-          </span>
-        )}
+        {/* Indicadores de medios disponibles */}
+        <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+          {images.length > 1 && (
+            <span className="flex items-center gap-1 text-[9px] font-bold bg-black/55 text-white px-2 py-1 rounded-full backdrop-blur-md">
+              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M3 5h18a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V6a1 1 0 011-1z" /></svg>
+              {images.length}
+            </span>
+          )}
+          {hasVideo && (
+            <span className="flex items-center gap-1 text-[9px] font-bold bg-black/55 text-white px-2 py-1 rounded-full backdrop-blur-md">
+              <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              VIDEO
+            </span>
+          )}
+        </div>
 
         {/* Badge superior (Tag) */}
         {product.tag && (

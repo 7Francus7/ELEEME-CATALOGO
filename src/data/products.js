@@ -37,6 +37,30 @@ export const formatPrice = (price) =>
     maximumFractionDigits: 0,
   }).format(price)
 
+// ─── HELPERS DE MEDIOS (fotos / videos) ───────────────────────────────────────
+// Un producto puede tener varias fotos (imagenes[]) y varios videos (videos[]).
+// Para compatibilidad con catálogos viejos, si faltan los arrays se derivan de los
+// campos antiguos imagen_url / video_url / video_storage_key.
+//   - imagenes[]: cada entrada es un link, un base64 (data:) o una clave 'idb:<key>'
+//                 que apunta a una imagen guardada en IndexedDB (ver utils/videoStore)
+//   - videos[]:   cada entrada es { key } (video subido en IndexedDB) o { url } (link)
+export const productImages = (product) => {
+  if (Array.isArray(product?.imagenes) && product.imagenes.length) {
+    return product.imagenes.filter(Boolean)
+  }
+  return product?.imagen_url ? [product.imagen_url] : []
+}
+
+export const productVideos = (product) => {
+  if (Array.isArray(product?.videos) && product.videos.length) {
+    return product.videos.filter((v) => v && (v.key || v.url))
+  }
+  const out = []
+  if (product?.video_storage_key) out.push({ key: product.video_storage_key })
+  if (product?.video_url) out.push({ url: product.video_url })
+  return out
+}
+
 // Devuelve los modelos presentes en una lista de productos, ordenados según MODELS
 export const availableModelsFor = (productList) => {
   const set = new Set()

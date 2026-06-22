@@ -5,26 +5,91 @@ import {
   activeColors,
   colorStock,
   modelStock,
+  productImages,
+  productVideos,
 } from '../data/products'
 import { WHATSAPP_NUMBER } from '../data/catalogConfig'
 import { getVideo } from '../utils/videoStore'
 import { XIcon, WhatsAppIcon, ChevronLeftIcon } from './Icons'
+import CatalogImage from './CatalogImage'
+
+// Reproductor de un video del producto. Resuelve su origen:
+//   - { key }  → video subido, guardado en IndexedDB (object URL, reproducción inline)
+//   - { url }  → archivo directo (.mp4/.webm…) inline; redes sociales abren en pestaña
+function ProductVideo({ video }) {
+  const [uploadedUrl, setUploadedUrl] = useState('')
+  useEffect(() => {
+    let objectUrl
+    if (video.key) {
+      getVideo(video.key).then((blob) => {
+        if (blob) {
+          objectUrl = URL.createObjectURL(blob)
+          setUploadedUrl(objectUrl)
+        }
+      })
+    }
+    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
+  }, [video.key])
+
+  const url = video.url?.trim()
+  const isFileVideo = url && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url)
+
+  if (uploadedUrl || isFileVideo) {
+    return (
+      <video
+        src={uploadedUrl || url}
+        controls
+        playsInline
+        preload="metadata"
+        className="w-full rounded-xl bg-black max-h-72 object-contain"
+      />
+    )
+  }
+  if (url) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 bg-[#1d1d1f] dark:bg-white dark:text-black text-white text-sm font-semibold px-4 py-3 rounded-xl active:scale-95 transition-all"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        Ver video
+      </a>
+    )
+  }
+  return null
+}
 
 export default function ProductModal({ product, activeModel, onNotifyRestock, onClose }) {
   const [email, setEmail] = useState('')
   const [notifyStatus, setNotifyStatus] = useState('') // '' | 'added' | 'duplicate' | 'invalid'
   const [lightboxOpen, setLightboxOpen] = useState(false) // foto en pantalla completa
+  const [activeImage, setActiveImage] = useState(0) // foto activa en la galería
+
+  const images = productImages(product)
+  const videos = productVideos(product)
+  const fitContain = product.imagen_ajuste === 'contain'
+  const safeActive = Math.min(activeImage, Math.max(images.length - 1, 0))
+  const goImage = (dir) => setActiveImage((i) => {
+    if (!images.length) return 0
+    return (i + dir + images.length) % images.length
+  })
 
   // Cerrar con Escape (primero el lightbox si está abierto, después el modal)
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key !== 'Escape') return
-      if (lightboxOpen) setLightboxOpen(false)
-      else onClose()
+      if (e.key === 'Escape') {
+        if (lightboxOpen) setLightboxOpen(false)
+        else onClose()
+      } else if (lightboxOpen && images.length > 1) {
+        if (e.key === 'ArrowRight') goImage(1)
+        else if (e.key === 'ArrowLeft') goImage(-1)
+      }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose, lightboxOpen])
+  }, [onClose, lightboxOpen, images.length])
 
   // Bloquear scroll del body
   useEffect(() => {
@@ -36,26 +101,7 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
     `Hola! Me interesa el ${product.nombre} (${formatPrice(product.precio)}). ¿Podés darme más información?`
   )
 
-  // Video: archivo directo (mp4/webm…) se reproduce en línea; redes sociales abren en pestaña nueva
-  const videoUrl = product.video_url?.trim()
-  const isFileVideo = videoUrl && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(videoUrl)
-
-  // Video subido al catálogo (guardado en IndexedDB): se carga como object URL para reproducirlo
-  const [uploadedVideoUrl, setUploadedVideoUrl] = useState('')
-  useEffect(() => {
-    let objectUrl
-    if (product.video_storage_key) {
-      getVideo(product.video_storage_key).then((blob) => {
-        if (blob) {
-          objectUrl = URL.createObjectURL(blob)
-          setUploadedVideoUrl(objectUrl)
-        }
-      })
-    }
-    return () => { if (objectUrl) URL.revokeObjectURL(objectUrl) }
-  }, [product.video_storage_key])
-
-  const hasVideo = uploadedVideoUrl || videoUrl
+  const hasVideo = videos.length > 0
 
   // ── Lógica de stock / colores ──────────────────────────────────────────────
   const colores = activeColors(product)
@@ -119,23 +165,62 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
         {/* Contenido principal — scroll interno */}
         <div className="flex flex-col sm:flex-row overflow-y-auto sm:overflow-hidden flex-1">
 
-          {/* Imagen — tocar para verla en grande */}
-          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 overflow-hidden relative group">
-            <img
-              src={product.imagen_url}
-              alt={product.nombre}
-              onClick={() => setLightboxOpen(true)}
-              className={`w-full h-64 sm:h-full cursor-zoom-in ${
-                product.imagen_ajuste === 'contain' ? 'object-contain p-8' : 'object-cover'
-              }`}
-              onError={(e) => {
-                e.target.src = `https://placehold.co/400x400/f5f5f7/86868b?text=${encodeURIComponent(product.nombre)}`
-              }}
-            />
-            <span className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white opacity-90 backdrop-blur-sm">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 8v6M8 11h6M19 11a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
-              Ampliar
-            </span>
+          {/* Galería — tocar para ver en grande; flechas/miniaturas si hay varias fotos */}
+          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 sm:overflow-y-auto">
+            <div className="relative group">
+              <CatalogImage
+                src={images[safeActive]}
+                alt={product.nombre}
+                fallbackText={product.nombre}
+                onClick={() => setLightboxOpen(true)}
+                className={`w-full h-64 sm:h-80 cursor-zoom-in ${fitContain ? 'object-contain p-8' : 'object-cover'}`}
+              />
+
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => goImage(-1)}
+                    aria-label="Foto anterior"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors"
+                  >
+                    <ChevronLeftIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => goImage(1)}
+                    aria-label="Foto siguiente"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors rotate-180"
+                  >
+                    <ChevronLeftIcon className="w-5 h-5" />
+                  </button>
+                  <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm">
+                    {safeActive + 1} / {images.length}
+                  </span>
+                </>
+              )}
+
+              <span className="pointer-events-none absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-medium text-white opacity-90 backdrop-blur-sm">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 8v6M8 11h6M19 11a8 8 0 11-16 0 8 8 0 0116 0z" /></svg>
+                Ampliar
+              </span>
+            </div>
+
+            {/* Miniaturas */}
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto p-3">
+                {images.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    aria-label={`Ver foto ${i + 1}`}
+                    className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
+                      i === safeActive ? 'border-[#0071e3]' : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <CatalogImage src={src} alt="" fallbackText={product.nombre} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Detalle */}
@@ -290,31 +375,17 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
               </p>
             </div>
 
-            {/* Video del producto */}
+            {/* Videos del producto */}
             {hasVideo && (
               <div className="mb-6">
                 <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73] dark:text-[#86868b] mb-2">
-                  Video del producto
+                  {videos.length === 1 ? 'Video del producto' : 'Videos del producto'}
                 </h3>
-                {uploadedVideoUrl || isFileVideo ? (
-                  <video
-                    src={uploadedVideoUrl || videoUrl}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    className="w-full rounded-xl bg-black max-h-72 object-contain"
-                  />
-                ) : (
-                  <a
-                    href={videoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 bg-[#1d1d1f] dark:bg-white dark:text-black text-white text-sm font-semibold px-4 py-3 rounded-xl active:scale-95 transition-all"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                    Ver video
-                  </a>
-                )}
+                <div className="space-y-3">
+                  {videos.map((v, i) => (
+                    <ProductVideo key={v.key || v.url || i} video={v} />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -379,9 +450,33 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
           >
             <XIcon className="w-5 h-5" />
           </button>
-          <img
-            src={product.imagen_url}
+
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); goImage(-1) }}
+                aria-label="Foto anterior"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              >
+                <ChevronLeftIcon className="w-6 h-6" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); goImage(1) }}
+                aria-label="Foto siguiente"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors rotate-180"
+              >
+                <ChevronLeftIcon className="w-6 h-6" />
+              </button>
+              <span className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white">
+                {safeActive + 1} / {images.length}
+              </span>
+            </>
+          )}
+
+          <CatalogImage
+            src={images[safeActive]}
             alt={product.nombre}
+            fallbackText={product.nombre}
             onClick={(e) => e.stopPropagation()}
             className="max-w-full max-h-[90dvh] object-contain rounded-lg cursor-zoom-out select-none"
           />

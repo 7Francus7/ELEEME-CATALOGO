@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
-import { DEFAULT_STOCK_KEY, formatPrice } from '../data/products'
+import { DEFAULT_STOCK_KEY, formatPrice, productImages } from '../data/products'
 import { COLOR_PRESETS, MODEL_CATEGORIES, MODELS } from '../data/catalogConfig'
-import { putVideo, deleteVideo } from '../utils/videoStore'
+import { putVideo, deleteVideo, getVideo, putImage, deleteImage, getImage } from '../utils/videoStore'
 import { XIcon, ChevronLeftIcon } from './Icons'
+import CatalogImage from './CatalogImage'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
 const ADMIN_PASSWORD = 'eleeme2024'
@@ -15,10 +16,9 @@ const EMPTY_FORM = {
   tag: '',
   compatible_con: '',
   modelos: [],
-  imagen_url: '',
+  imagenes: [],
   imagen_ajuste: 'cover',
-  video_url: '',
-  video_storage_key: '',
+  videos: [],
   descripcion: '',
   por_que_lo_necesitas: '',
   destacado: false,
@@ -30,20 +30,26 @@ const EMPTY_FORM = {
   stock_gestion: 'manual',
 }
 
-// Redimensiona la imagen a máx 800px y la convierte a JPEG 82% antes de guardar
-function resizeImage(file) {
+// Redimensiona la imagen a máx 1000px y la devuelve como Blob JPEG 85%.
+// Las fotos subidas se guardan en IndexedDB (no en localStorage, que es chico y se
+// satura con pocas fotos en base64), referenciadas en el producto como 'idb:<key>'.
+function resizeImageToBlob(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       const img = new Image()
       img.onload = () => {
-        const MAX = 800
+        const MAX = 1000
         const ratio = Math.min(MAX / img.width, MAX / img.height, 1)
         const canvas = document.createElement('canvas')
         canvas.width = Math.round(img.width * ratio)
         canvas.height = Math.round(img.height * ratio)
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
-        resolve(canvas.toDataURL('image/jpeg', 0.82))
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error('No se pudo generar la imagen'))),
+          'image/jpeg',
+          0.85
+        )
       }
       img.onerror = reject
       img.src = e.target.result
@@ -205,6 +211,8 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
   const [editingId, setEditingId] = useState(null)
   const [imageProcessing, setImageProcessing] = useState(false)
   const [videoProcessing, setVideoProcessing] = useState(false)
+  const [imageUrlInput, setImageUrlInput] = useState('')
+  const [videoUrlInput, setVideoUrlInput] = useState('')
   const [saveStatus, setSaveStatus] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeView, setActiveView] = useState('list') // 'list' | 'form'
@@ -250,7 +258,11 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
   const handleDelete = (id) => {
     if (!window.confirm('¿Eliminar este producto?')) return
     const target = products.find((p) => p.id === id)
-    if (target?.video_storage_key) deleteVideo(target.video_storage_key)
+    // Liberar los medios subidos a IndexedDB (fotos 'idb:<key>' y videos { key })
+    ;(target?.imagenes || []).forEach((src) => {
+      if (typeof src === 'string' && src.startsWith('idb:')) deleteImage(src.slice(4))
+    })
+    ;(target?.videos || []).forEach((v) => { if (v?.key) deleteVideo(v.key) })
     onSave(products.filter((p) => p.id !== id))
     if (editingId === id) {
       setEditingId(null)
@@ -258,13 +270,46 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     }
   }
 
-  const handleDuplicate = (product) => {
+  const handleDuplicate = async (product) => {
     const newId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1
+
+    // Copiar los blobs de IndexedDB con claves nuevas para que borrar la copia no
+    // afecte al original (y viceversa).
+    const imagenes = []
+    for (const src of product.imagenes || []) {
+      if (typeof src === 'string' && src.startsWith('idb:')) {
+        const blob = await getImage(src.slice(4))
+        if (blob) {
+          const key = `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+          await putImage(key, blob)
+          imagenes.push(`idb:${key}`)
+        }
+      } else {
+        imagenes.push(src)
+      }
+    }
+    const videos = []
+    for (const v of product.videos || []) {
+      if (v?.key) {
+        const blob = await getVideo(v.key)
+        if (blob) {
+          const key = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+          await putVideo(key, blob)
+          videos.push({ key })
+        }
+      } else if (v?.url) {
+        videos.push({ url: v.url })
+      }
+    }
+
     const duplicated = {
       ...product,
       id: newId,
       nombre: `${product.nombre} (Copia)`,
       destacado: false,
+      imagenes,
+      videos,
+      imagen_url: imagenes[0] || '',
     }
     onSave([...products, duplicated])
     handleEdit(duplicated)
@@ -284,22 +329,54 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     onSave(updated)
   }
 
-  const handleImageFile = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  // ── Fotos del producto (varias) ──────────────────────────────────────────────
+  // Cada foto subida se redimensiona y guarda en IndexedDB; en el producto se
+  // referencia como 'idb:<key>'. Los links/URL se guardan tal cual.
+  const handleImageFiles = async (e) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
     try {
       setImageProcessing(true)
-      const base64 = await resizeImage(file)
-      setForm((prev) => ({ ...prev, imagen_url: base64 }))
+      const nuevas = []
+      for (const file of files) {
+        const blob = await resizeImageToBlob(file)
+        const key = `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+        await putImage(key, blob)
+        nuevas.push(`idb:${key}`)
+      }
+      setForm((prev) => ({ ...prev, imagenes: [...(prev.imagenes || []), ...nuevas] }))
     } catch {
-      alert('Error al procesar la imagen.')
+      alert('Error al procesar alguna imagen.')
     } finally {
       setImageProcessing(false)
       e.target.value = ''
     }
   }
 
-  // Guarda el video en IndexedDB (no en localStorage, que es chico) y referencia su clave
+  const addImageUrl = () => {
+    const url = (imageUrlInput || '').trim()
+    if (!url) return
+    setForm((prev) => ({ ...prev, imagenes: [...(prev.imagenes || []), url] }))
+    setImageUrlInput('')
+  }
+
+  const removeImage = async (index) => {
+    const target = (form.imagenes || [])[index]
+    if (typeof target === 'string' && target.startsWith('idb:')) await deleteImage(target.slice(4))
+    setForm((prev) => ({ ...prev, imagenes: (prev.imagenes || []).filter((_, i) => i !== index) }))
+  }
+
+  const moveImage = (index, dir) => {
+    const j = index + dir
+    setForm((prev) => {
+      const arr = [...(prev.imagenes || [])]
+      if (j < 0 || j >= arr.length) return prev
+      ;[arr[index], arr[j]] = [arr[j], arr[index]]
+      return { ...prev, imagenes: arr }
+    })
+  }
+
+  // ── Videos del producto (varios) ─────────────────────────────────────────────
   const handleVideoFile = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -310,9 +387,9 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     }
     try {
       setVideoProcessing(true)
-      const key = form.video_storage_key || `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+      const key = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
       await putVideo(key, file)
-      setForm((prev) => ({ ...prev, video_storage_key: key, video_url: '' }))
+      setForm((prev) => ({ ...prev, videos: [...(prev.videos || []), { key }] }))
     } catch {
       alert('No se pudo guardar el video.')
     } finally {
@@ -321,9 +398,17 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     }
   }
 
-  const handleRemoveVideo = async () => {
-    if (form.video_storage_key) await deleteVideo(form.video_storage_key)
-    setForm((prev) => ({ ...prev, video_storage_key: '', video_url: '' }))
+  const addVideoUrl = () => {
+    const url = (videoUrlInput || '').trim()
+    if (!url) return
+    setForm((prev) => ({ ...prev, videos: [...(prev.videos || []), { url }] }))
+    setVideoUrlInput('')
+  }
+
+  const removeVideo = async (index) => {
+    const target = (form.videos || [])[index]
+    if (target?.key) await deleteVideo(target.key)
+    setForm((prev) => ({ ...prev, videos: (prev.videos || []).filter((_, i) => i !== index) }))
   }
 
   // ── Gestión de colores ──────────────────────────────────────────────────────
@@ -426,18 +511,21 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     e.preventDefault()
     const precio = Number(form.precio)
     const precio_original = form.precio_original ? Number(form.precio_original) : null
+    // imagen_url se mantiene como espejo de la primera foto (compatibilidad)
+    const imagen_url = (form.imagenes || [])[0] || ''
+    const base = { ...form, imagen_url, precio, precio_original }
 
     let updated
     let targetId = editingId
 
     if (editingId) {
       updated = products.map((p) =>
-        p.id === editingId ? { ...p, ...form, precio, precio_original } : p
+        p.id === editingId ? { ...p, ...base } : p
       )
     } else {
       const newId = products.length ? Math.max(...products.map((p) => p.id)) + 1 : 1
       targetId = newId
-      updated = [...products, { ...form, id: newId, precio, precio_original }]
+      updated = [...products, { ...base, id: newId }]
     }
 
     // Si se marca como destacado, desmarcar el resto (solo uno en el banner)
@@ -570,7 +658,7 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
                   )}
                   
                   <div className="w-14 h-14 rounded-2xl bg-[#f5f5f7] dark:bg-[#2c2c2e] overflow-hidden flex-shrink-0 border border-gray-100 dark:border-white/5">
-                    <img src={p.imagen_url} className="w-full h-full object-cover" />
+                    <CatalogImage src={productImages(p)[0]} alt={p.nombre} fallbackText={p.nombre} className="w-full h-full object-cover" />
                   </div>
 
                   <div className="flex-1 min-w-0">
@@ -924,33 +1012,61 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
 
               {/* Bloque: Imagen */}
               <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm">
-                <label className="admin-label mb-6 block">Imagen del Producto *</label>
-                <div className="flex flex-col md:flex-row gap-8 items-center">
-                  <div className="w-48 h-48 bg-[#fbfbfd] dark:bg-[#2c2c2e] rounded-[24px] flex items-center justify-center border-2 border-dashed border-gray-100 dark:border-white/5 overflow-hidden group relative">
-                    {form.imagen_url ? (
-                      <>
-                        <img src={form.imagen_url} className={`w-full h-full transition-transform group-hover:scale-105 ${form.imagen_ajuste === 'contain' ? 'object-contain p-4' : 'object-cover'}`} />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button type="button" onClick={() => setForm(p => ({...p, imagen_url: ''}))} className="bg-white text-black text-[10px] font-black px-3 py-1.5 rounded-full shadow-xl">QUITAR</button>
+                <div className="flex items-center justify-between mb-6">
+                  <label className="admin-label !mb-0">Fotos del Producto *</label>
+                  <span className="text-[11px] font-bold text-[#86868b]">
+                    {(form.imagenes || []).length} {(form.imagenes || []).length === 1 ? 'foto' : 'fotos'}
+                  </span>
+                </div>
+
+                {/* Galería de fotos cargadas — la primera es la portada */}
+                {(form.imagenes || []).length > 0 ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
+                    {(form.imagenes || []).map((src, i) => (
+                      <div key={i} className="relative aspect-square bg-[#fbfbfd] dark:bg-[#2c2c2e] rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5 group">
+                        <CatalogImage src={src} alt="" fallbackText={form.nombre} className={`w-full h-full ${form.imagen_ajuste === 'contain' ? 'object-contain p-2' : 'object-cover'}`} />
+                        {i === 0 && (
+                          <span className="absolute top-1.5 left-1.5 text-[8px] font-black uppercase tracking-widest bg-[#0071e3] text-white px-1.5 py-0.5 rounded-full">Portada</span>
+                        )}
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-1 p-1.5 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button type="button" onClick={() => moveImage(i, -1)} disabled={i === 0} title="Mover antes" className="text-white text-sm disabled:opacity-30">◀</button>
+                          <button type="button" onClick={() => removeImage(i)} title="Quitar" className="bg-white/90 text-black text-[9px] font-black px-2 py-0.5 rounded-full">QUITAR</button>
+                          <button type="button" onClick={() => moveImage(i, 1)} disabled={i === (form.imagenes || []).length - 1} title="Mover después" className="text-white text-sm disabled:opacity-30">▶</button>
                         </div>
-                      </>
-                    ) : (
-                      <span className="text-5xl opacity-20">📷</span>
-                    )}
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex-1 w-full space-y-4">
-                    <button type="button" onClick={() => fileRef.current.click()} disabled={imageProcessing} className="w-full bg-[#0071e3] text-white py-5 rounded-[20px] text-sm font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
-                      {imageProcessing ? 'PROCESANDO...' : 'ELEGIR DESDE GALERÍA'}
+                ) : (
+                  <div className="w-full h-40 bg-[#fbfbfd] dark:bg-[#2c2c2e] rounded-[24px] flex flex-col items-center justify-center border-2 border-dashed border-gray-100 dark:border-white/5 mb-6">
+                    <span className="text-5xl opacity-20">📷</span>
+                    <span className="text-[11px] text-[#86868b] mt-2">Todavía sin fotos</span>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <button type="button" onClick={() => fileRef.current.click()} disabled={imageProcessing} className="w-full bg-[#0071e3] text-white py-5 rounded-[20px] text-sm font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 active:scale-95 transition-all">
+                    {imageProcessing ? 'PROCESANDO...' : '+ AGREGAR FOTOS DESDE GALERÍA'}
+                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">o pega un link</span>
+                    <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className="admin-input text-sm py-4 flex-1"
+                      value={imageUrlInput}
+                      onChange={(e) => setImageUrlInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addImageUrl())}
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                    />
+                    <button type="button" onClick={addImageUrl} className="flex-shrink-0 text-xs font-black uppercase tracking-widest text-white bg-[#1d1d1f] dark:bg-white dark:text-black px-5 rounded-[20px] active:scale-95 transition-all">
+                      Agregar
                     </button>
-                    <div className="flex items-center gap-3">
-                      <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
-                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">o pega un link</span>
-                      <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
-                    </div>
-                    <input type="text" className="admin-input text-sm py-4" value={form.imagen_url.startsWith('data:') ? '' : form.imagen_url} onChange={f('imagen_url')} placeholder="https://ejemplo.com/imagen.jpg" />
-                    <p className="text-[10px] text-[#86868b] font-medium text-center italic">Tip: recomendamos imágenes con fondo blanco o transparente.</p>
-                    <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageFile} />
                   </div>
+                  <p className="text-[10px] text-[#86868b] font-medium text-center italic">Podés subir varias fotos a la vez. La primera es la portada (arrastrá con ◀▶).</p>
+                  <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageFiles} />
                 </div>
 
                 {/* Cómo se muestra la foto en el recuadro */}
@@ -979,48 +1095,62 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
                   </div>
                 </div>
 
-                {/* Video del producto (opcional) */}
+                {/* Videos del producto (opcional, varios) */}
                 <div className="mt-6 pt-6 border-t border-gray-100 dark:border-white/5">
-                  <label className="admin-label mb-3 block">Video del producto (opcional)</label>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="admin-label !mb-0">Videos del producto (opcional)</label>
+                    <span className="text-[11px] font-bold text-[#86868b]">
+                      {(form.videos || []).length} {(form.videos || []).length === 1 ? 'video' : 'videos'}
+                    </span>
+                  </div>
 
-                  {form.video_storage_key ? (
-                    <div className="flex items-center justify-between gap-3 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl px-4 py-4">
-                      <span className="flex items-center gap-2 text-sm font-bold text-[#1d1d1f] dark:text-white">
-                        <svg className="w-5 h-5 text-[#0071e3]" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                        Video cargado ✓
-                      </span>
-                      <button type="button" onClick={handleRemoveVideo} className="text-[11px] font-black uppercase tracking-widest text-red-500 px-3 py-1.5 rounded-full active:scale-95 transition-all">
-                        Quitar
-                      </button>
+                  {/* Videos cargados */}
+                  {(form.videos || []).length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      {(form.videos || []).map((v, i) => (
+                        <div key={i} className="flex items-center justify-between gap-3 bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-2xl px-4 py-3">
+                          <span className="flex items-center gap-2 text-sm font-bold text-[#1d1d1f] dark:text-white min-w-0">
+                            <svg className="w-5 h-5 text-[#0071e3] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                            <span className="truncate">{v.key ? 'Video subido ✓' : v.url}</span>
+                          </span>
+                          <button type="button" onClick={() => removeVideo(i)} className="flex-shrink-0 text-[11px] font-black uppercase tracking-widest text-red-500 px-3 py-1.5 rounded-full active:scale-95 transition-all">
+                            Quitar
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => videoFileRef.current.click()}
-                        disabled={videoProcessing}
-                        className="w-full bg-[#1d1d1f] dark:bg-white dark:text-black text-white py-5 rounded-[20px] text-sm font-black uppercase tracking-widest active:scale-95 transition-all"
-                      >
-                        {videoProcessing ? 'SUBIENDO...' : 'SUBIR VIDEO DESDE EL CELULAR'}
-                      </button>
-                      <div className="flex items-center gap-3 my-4">
-                        <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">o pega un link</span>
-                        <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
-                      </div>
-                      <input
-                        type="text"
-                        className="admin-input text-sm py-4"
-                        value={form.video_url || ''}
-                        onChange={f('video_url')}
-                        placeholder="Link de Instagram, YouTube, TikTok o .mp4"
-                      />
-                    </>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={() => videoFileRef.current.click()}
+                    disabled={videoProcessing}
+                    className="w-full bg-[#1d1d1f] dark:bg-white dark:text-black text-white py-5 rounded-[20px] text-sm font-black uppercase tracking-widest active:scale-95 transition-all"
+                  >
+                    {videoProcessing ? 'SUBIENDO...' : '+ SUBIR VIDEO DESDE EL CELULAR'}
+                  </button>
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">o pega un link</span>
+                    <div className="h-px bg-gray-100 dark:bg-white/5 flex-1"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      className="admin-input text-sm py-4 flex-1"
+                      value={videoUrlInput}
+                      onChange={(e) => setVideoUrlInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addVideoUrl())}
+                      placeholder="Link de Instagram, YouTube, TikTok o .mp4"
+                    />
+                    <button type="button" onClick={addVideoUrl} className="flex-shrink-0 text-xs font-black uppercase tracking-widest text-white bg-[#0071e3] px-5 rounded-[20px] active:scale-95 transition-all">
+                      Agregar
+                    </button>
+                  </div>
 
                   <input ref={videoFileRef} type="file" accept="video/*" className="hidden" onChange={handleVideoFile} />
                   <p className="text-[11px] text-[#86868b] mt-3 leading-relaxed">
-                    Subí un clip corto (máx 60 MB) o pegá un link. Tip: videos de 5 a 15 segundos cargan más rápido.
+                    Podés sumar varios videos. Subí clips cortos (máx 60 MB c/u) o pegá links. Tip: videos de 5 a 15 segundos cargan más rápido.
                   </p>
                 </div>
               </div>

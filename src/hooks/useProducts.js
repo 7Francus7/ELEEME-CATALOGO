@@ -33,10 +33,29 @@ function normalizeProduct(product) {
     else if (model) extraModels.push(model)
   })
 
+  // Migración a multimedia: garantiza siempre arrays imagenes[] y videos[].
+  // Catálogos viejos guardaban una sola foto (imagen_url) y un solo video
+  // (video_url / video_storage_key); acá se convierten a los nuevos arrays.
+  const imagenes = Array.isArray(product?.imagenes) && product.imagenes.length
+    ? product.imagenes.filter(Boolean)
+    : (product?.imagen_url ? [product.imagen_url] : [])
+
+  let videos
+  if (Array.isArray(product?.videos)) {
+    videos = product.videos.filter((v) => v && (v.key || v.url))
+  } else {
+    videos = []
+    if (product?.video_storage_key) videos.push({ key: product.video_storage_key })
+    if (product?.video_url) videos.push({ url: product.video_url })
+  }
+
   return {
     ...product,
     categoria,
     modelos: [...MODELS.filter((model) => knownModels.includes(model)), ...extraModels],
+    imagenes,
+    videos,
+    imagen_url: imagenes[0] || '',
   }
 }
 
