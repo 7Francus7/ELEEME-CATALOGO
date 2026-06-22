@@ -154,6 +154,29 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
               Compatible con {product.compatible_con}
             </p>
 
+            {/* Modelos disponibles (solo productos que se gestionan por modelo) */}
+            {needsModel && product.modelos.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73] dark:text-[#86868b] mb-3">
+                  Modelos disponibles
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.modelos.map((m) => (
+                    <span
+                      key={m}
+                      className={`text-xs font-medium px-3 py-1.5 rounded-full border ${
+                        m === activeModel
+                          ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]'
+                          : 'border-gray-200 dark:border-white/10 text-[#1d1d1f] dark:text-[#e5e5ea]'
+                      }`}
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Colores y disponibilidad */}
             {colores.length > 0 && (
               <div className="mb-6">
@@ -165,9 +188,25 @@ export default function ProductModal({ product, activeModel, onNotifyRestock, on
                 </h3>
 
                 {!stockVisible ? (
-                  <p className="text-sm text-[#6e6e73] dark:text-[#86868b] bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-xl px-4 py-3">
-                    Seleccioná un modelo arriba para ver el stock de cada color.
-                  </p>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      {colores.map((c) => (
+                        <span
+                          key={c.nombre}
+                          className="flex items-center gap-2 rounded-full border border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e] pl-1.5 pr-3 py-1"
+                        >
+                          <span
+                            className="w-4 h-4 rounded-full border border-black/10 dark:border-white/20 flex-shrink-0"
+                            style={{ backgroundColor: c.codigo }}
+                          />
+                          <span className="text-sm font-medium text-[#1d1d1f] dark:text-white">{c.nombre}</span>
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-[#6e6e73] dark:text-[#86868b] bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-xl px-4 py-3">
+                      Disponible en estos colores para todos los modelos. Seleccioná un modelo arriba para ver el stock de cada color.
+                    </p>
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {colores.map((c) => {
