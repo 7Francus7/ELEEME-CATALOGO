@@ -477,11 +477,10 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     }
   })
 
-  // Claves de stock: por modelo (Fundas/Protectores) o una única para el resto
+  // Claves de stock: por modelo si el producto tiene modelos cargados (igual criterio que
+  // usesModels() en products.js y que el modal del cliente), o una única clave para el resto.
   const stockKeys =
-    MODEL_CATEGORIES.includes(form.categoria) && (form.modelos || []).length
-      ? form.modelos
-      : [DEFAULT_STOCK_KEY]
+    (form.modelos || []).length ? form.modelos : [DEFAULT_STOCK_KEY]
 
   const setStockQty = (modelKey, colorName, value) => {
     const qty = Math.max(0, Math.floor(Number(value) || 0))
@@ -730,8 +729,11 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
                   </div>
                 </div>
 
-                {/* Modelos compatibles — habilita el filtro por modelo (solo Fundas / Protectores) */}
-                {MODEL_CATEGORIES.includes(form.categoria) && (
+                {/* Modelos compatibles — habilita el filtro por modelo (Fundas / Protectores / Vidrio).
+                    También se muestra si el producto YA tiene modelos guardados aunque su categoría
+                    no sea de modelos, para poder sacarlos: el modal del cliente los muestra mientras
+                    el array no esté vacío, así que siempre tiene que haber forma de editarlos. */}
+                {(MODEL_CATEGORIES.includes(form.categoria) || (form.modelos || []).length > 0) && (
                   <div className="pt-2">
                     <label className="admin-label">Modelos de iPhone (filtro)</label>
                     <p className="text-[11px] text-[#86868b] mb-3">Tocá los modelos para los que está disponible este producto.</p>
