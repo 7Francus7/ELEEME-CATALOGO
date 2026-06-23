@@ -32,7 +32,9 @@ function ProductVideo({ video }) {
   }, [video.key])
 
   const url = video.url?.trim()
-  const isFileVideo = url && /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url)
+  // Reproducción inline para archivos de video directos y para los servidos por
+  // nuestro backend (/api/media, que manda el Content-Type correcto).
+  const isFileVideo = url && (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url) || /^\/api\/media\b/.test(url))
 
   if (uploadedUrl || isFileVideo) {
     return (
