@@ -66,12 +66,25 @@ Es la "contraseña" para **publicar** cambios. Solo vos la tenés.
 
 ---
 
-## Sobre los videos
+## Subir videos (paso extra, una sola vez)
 
-Los videos **pesados subidos desde el celular** no entran en la nube (hay un
-límite de ~4,5 MB por subida). Para videos que quieras que vean todos, usá la
-opción **"O pegá un link"** (Instagram, YouTube o un .mp4). Los videos que subís
-como archivo quedan guardados solo en tu celular.
+Las **fotos** se guardan en la base Neon (pasos de arriba). Los **videos** son
+pesados, así que se suben directo del celular a un almacenamiento aparte
+(**Vercel Blob**). Para habilitarlos:
+
+1. En tu proyecto de Vercel → pestaña **Storage** → **Create Database** →
+   elegí **Blob** → ponele un nombre (ej: `eleeme-videos`) → **Create**.
+2. Cuando pregunte, **conectalo a este proyecto** (`eleeme-catalogo`, todos los
+   entornos). Esto agrega solo la variable `BLOB_READ_WRITE_TOKEN`.
+3. Hacé **Redeploy** (pestaña Deployments → ⋯ → Redeploy).
+
+Listo: desde el admin podés subir videos de hasta **200 MB** mostrando los
+productos, y los ven todos. (Igual podés seguir usando **"O pegá un link"** de
+Instagram/YouTube si preferís.)
+
+> Si todavía no creaste el Blob store, al intentar subir un video el catálogo lo
+> guarda solo en tu celular (no falla, pero no lo ven los demás). Apenas creás el
+> store y redeployás, ya funciona para todos.
 
 ## Preguntas frecuentes
 

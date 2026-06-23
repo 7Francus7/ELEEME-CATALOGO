@@ -440,8 +440,8 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
   const handleVideoFile = async (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 60 * 1024 * 1024) {
-      alert('El video es muy pesado (máx 60 MB). Subí un clip más corto.')
+    if (file.size > 200 * 1024 * 1024) {
+      alert('El video es muy pesado (máx 200 MB). Subí un clip más corto.')
       e.target.value = ''
       return
     }
@@ -1265,7 +1265,7 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
 
                   <input ref={videoFileRef} type="file" accept="video/*" className="hidden" onChange={handleVideoFile} />
                   <p className="text-[11px] text-[#86868b] mt-3 leading-relaxed">
-                    Podés sumar varios videos. Subí clips cortos (máx 60 MB c/u) o pegá links. Tip: videos de 5 a 15 segundos cargan más rápido.
+                    Podés sumar varios videos. Subí clips (máx 200 MB c/u) o pegá links. Tip: videos de 5 a 15 segundos cargan más rápido.
                   </p>
                 </div>
               </div>

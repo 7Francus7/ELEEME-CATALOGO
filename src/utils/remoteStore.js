@@ -5,6 +5,7 @@
 // Solo cuando el dueño carga su token y publica, los cambios pasan a guardarse
 // online y todos los que abren el link ven la última versión.
 
+import { upload } from '@vercel/blob/client'
 import { getImage, getVideo } from './videoStore'
 
 const TOKEN_KEY = 'eleeme_admin_token'
@@ -69,11 +70,30 @@ export function pushRemoteCatalog() {
 
 // ── Subida de medios (fotos/videos) a la nube ───────────────────────────────────
 // Recibe un Blob/File. Devuelve la URL pública, o null si no se pudo (sin token,
-// sin backend o error de red) para poder caer al guardado local.
+// sin backend o error) para poder caer al guardado local.
+//
+//  - Videos → subida DIRECTA del navegador a Vercel Blob (sin tope de 4,5 MB).
+//  - Fotos  → van por /api/upload a la base Neon (livianas, bajo el tope).
 export async function uploadMedia(file, kind = 'img', name) {
   const token = getAdminToken()
   if (!token || !file) return null
-  const filename = name || file.name || `${kind}`
+  const filename = name || file.name || kind
+
+  if (kind === 'vid') {
+    try {
+      // Conserva la extensión real para que el reproductor lo muestre inline.
+      const blob = await upload(`videos/${Date.now()}_${filename}`, file, {
+        access: 'public',
+        handleUploadUrl: '/api/blob-upload',
+        clientPayload: token,
+        contentType: file.type || undefined,
+      })
+      return blob?.url || null
+    } catch {
+      return null
+    }
+  }
+
   try {
     const res = await fetch(
       `/api/upload?kind=${encodeURIComponent(kind)}&name=${encodeURIComponent(filename)}`,
