@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { products as defaultProducts } from '../data/products'
 import { MODELS } from '../data/catalogConfig'
+import { loadRemoteCatalog, rememberSlice, pushRemoteCatalog } from '../utils/remoteStore'
 
 const STORAGE_KEY = 'eleeme_catalog_v4'
 const LEGACY_STORAGE_KEY = 'eleeme_catalog_v3'
@@ -82,11 +83,29 @@ function loadProducts() {
 export function useProducts() {
   const [products, setProducts] = useState(loadProducts)
 
+  // Al abrir, traer el catálogo publicado en la nube (si hay backend configurado).
+  // Mientras tanto se muestra lo local/los defaults; cuando llega, lo reemplaza.
+  useEffect(() => {
+    rememberSlice('products', products)
+    let alive = true
+    loadRemoteCatalog().then((remote) => {
+      if (!alive || !remote || !Array.isArray(remote.products)) return
+      const normalized = remote.products.map(normalizeProduct)
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
+      rememberSlice('products', normalized)
+      setProducts(normalized)
+    })
+    return () => { alive = false }
+  }, [])
+
   // Puede lanzar QuotaExceededError si las imágenes en base64 saturan localStorage
   const saveProducts = (newProducts) => {
     const normalized = newProducts.map(normalizeProduct)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized))
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
     setProducts(normalized)
+    // Sincronizar con la nube (no hace nada si no hay token de admin cargado)
+    rememberSlice('products', normalized)
+    pushRemoteCatalog()
   }
 
   // Restaura el catálogo de ejemplo original

@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DEFAULT_CATEGORIES } from '../data/catalogConfig'
+import { loadRemoteCatalog, rememberSlice, pushRemoteCatalog } from '../utils/remoteStore'
 
 const STORAGE_KEY = 'eleeme_categories_v1'
 
@@ -35,11 +36,28 @@ function loadCategories() {
 export function useCategories() {
   const [categories, setCategories] = useState(loadCategories)
 
+  // Traer las categorías publicadas en la nube (si hay backend configurado).
+  useEffect(() => {
+    rememberSlice('categories', categories)
+    let alive = true
+    loadRemoteCatalog().then((remote) => {
+      if (!alive || !remote || !Array.isArray(remote.categories)) return
+      const clean = sanitize(remote.categories)
+      if (!clean.length) return
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(clean)) } catch {}
+      rememberSlice('categories', clean)
+      setCategories(clean)
+    })
+    return () => { alive = false }
+  }, [])
+
   const saveCategories = (next) => {
     const clean = sanitize(next)
     const final = clean.length ? clean : [...DEFAULT_CATEGORIES]
     localStorage.setItem(STORAGE_KEY, JSON.stringify(final))
     setCategories(final)
+    rememberSlice('categories', final)
+    pushRemoteCatalog()
   }
 
   const resetCategories = () => {

@@ -2,6 +2,10 @@ import { useState, useRef, useEffect } from 'react'
 import { DEFAULT_STOCK_KEY, formatPrice, productImages } from '../data/products'
 import { COLOR_PRESETS, MODEL_CATEGORIES, MODELS } from '../data/catalogConfig'
 import { putVideo, deleteVideo, getVideo, putImage, deleteImage, getImage } from '../utils/videoStore'
+import {
+  getAdminToken, setAdminToken, hasAdminToken,
+  uploadMedia, publishCatalog, countLocalMedia, rememberSlice,
+} from '../utils/remoteStore'
 import { XIcon, ChevronLeftIcon } from './Icons'
 import CatalogImage from './CatalogImage'
 
@@ -217,6 +221,13 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
   const [searchQuery, setSearchQuery] = useState('')
   const [activeView, setActiveView] = useState('list') // 'list' | 'form'
 
+  // ── Conexión con la nube ──────────────────────────────────────────────────────
+  const [cloudOpen, setCloudOpen] = useState(false)
+  const [tokenInput, setTokenInput] = useState(getAdminToken())
+  const [connected, setConnected] = useState(hasAdminToken())
+  const [publishing, setPublishing] = useState(false)
+  const [publishMsg, setPublishMsg] = useState('')
+
   const fileRef = useRef()
   const videoFileRef = useRef()
   const formRef = useRef()
@@ -231,6 +242,48 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
       setPwError(true)
       setPwInput('')
       setTimeout(() => setPwError(false), 1500)
+    }
+  }
+
+  // Guardar / borrar el token de conexión con la nube
+  const saveCloudToken = () => {
+    setAdminToken(tokenInput)
+    setConnected(hasAdminToken())
+    setPublishMsg(hasAdminToken() ? 'Conectado ✓' : 'Desconectado')
+    setTimeout(() => setPublishMsg(''), 2500)
+  }
+
+  // Publicar todo el catálogo online (sube fotos/videos locales y guarda en la nube)
+  const handlePublish = async () => {
+    if (!hasAdminToken()) {
+      setCloudOpen(true)
+      setPublishMsg('Primero pegá la clave y conectá.')
+      return
+    }
+    const total = countLocalMedia(products)
+    let done = 0
+    setPublishing(true)
+    setPublishMsg(total ? `Subiendo fotos/videos… 0/${total}` : 'Publicando…')
+    try {
+      const result = await publishCatalog(
+        { products, categories },
+        () => { done++; setPublishMsg(`Subiendo fotos/videos… ${done}/${total}`) }
+      )
+      if (result.ok) {
+        // Guardar localmente los productos ya migrados (con URLs) para no resubir
+        if (Array.isArray(result.products)) onSave(result.products)
+        rememberSlice('categories', categories)
+        setPublishMsg('Publicado ✓ Ya lo ven todos.')
+      } else if (result.reason === 'no-token') {
+        setPublishMsg('Falta conectar la clave.')
+      } else {
+        setPublishMsg(`No se pudo publicar${result.status ? ` (error ${result.status})` : ''}. Revisá la clave.`)
+      }
+    } catch {
+      setPublishMsg('No se pudo publicar. Revisá la conexión.')
+    } finally {
+      setPublishing(false)
+      setTimeout(() => setPublishMsg(''), 5000)
     }
   }
 
@@ -340,9 +393,16 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
       const nuevas = []
       for (const file of files) {
         const blob = await resizeImageToBlob(file)
-        const key = `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-        await putImage(key, blob)
-        nuevas.push(`idb:${key}`)
+        // Si hay conexión con la nube, la foto se sube y se guarda como URL
+        // pública (visible desde cualquier dispositivo). Si no, va a IndexedDB.
+        const url = await uploadMedia(blob, 'img', 'foto.jpg')
+        if (url) {
+          nuevas.push(url)
+        } else {
+          const key = `img_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+          await putImage(key, blob)
+          nuevas.push(`idb:${key}`)
+        }
       }
       setForm((prev) => ({ ...prev, imagenes: [...(prev.imagenes || []), ...nuevas] }))
     } catch {
@@ -387,9 +447,15 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     }
     try {
       setVideoProcessing(true)
-      const key = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-      await putVideo(key, file)
-      setForm((prev) => ({ ...prev, videos: [...(prev.videos || []), { key }] }))
+      // Si hay conexión con la nube, el video se sube y se guarda como URL.
+      const url = await uploadMedia(file, 'vid', file.name || 'video.mp4')
+      if (url) {
+        setForm((prev) => ({ ...prev, videos: [...(prev.videos || []), { url }] }))
+      } else {
+        const key = `vid_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+        await putVideo(key, file)
+        setForm((prev) => ({ ...prev, videos: [...(prev.videos || []), { key }] }))
+      }
     } catch {
       alert('No se pudo guardar el video.')
     } finally {
@@ -599,6 +665,53 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
           </button>
         </div>
       </header>
+
+      {/* Conexión con la nube — publicar para que todos vean lo mismo */}
+      <div className="bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 py-2.5">
+          <span className={`flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest ${connected ? 'text-green-500' : 'text-[#86868b]'}`}>
+            <span className={`w-2 h-2 rounded-full ${connected ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+            {connected ? 'Nube conectada' : 'Solo en este celular'}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCloudOpen((v) => !v)}
+            className="text-[11px] font-bold text-[#0071e3]"
+          >
+            {connected ? 'Cambiar clave' : 'Conectar'}
+          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {publishMsg && <span className="text-[11px] font-bold text-[#0071e3] truncate max-w-[40vw]">{publishMsg}</span>}
+            <button
+              type="button"
+              onClick={handlePublish}
+              disabled={publishing}
+              className="text-[11px] font-black uppercase tracking-widest text-white bg-[#0071e3] px-4 py-2 rounded-full active:scale-95 transition-all disabled:opacity-50"
+            >
+              {publishing ? 'Publicando…' : '☁ Publicar online'}
+            </button>
+          </div>
+        </div>
+        {cloudOpen && (
+          <div className="px-4 pb-3 flex flex-col sm:flex-row sm:items-center gap-2">
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder="Clave de publicación (ADMIN_TOKEN)"
+              className="flex-1 min-w-0 bg-[#f5f5f7] dark:bg-[#2c2c2e] dark:text-white rounded-xl px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]/20"
+            />
+            <button
+              type="button"
+              onClick={saveCloudToken}
+              className="text-xs font-black uppercase tracking-widest text-white bg-black dark:bg-white dark:text-black px-5 py-2.5 rounded-xl active:scale-95 transition-all"
+            >
+              Guardar clave
+            </button>
+            <p className="text-[11px] text-[#86868b] sm:hidden">La clave la configuraste en Vercel (variable ADMIN_TOKEN).</p>
+          </div>
+        )}
+      </div>
 
       {/* Selector de Vista (Solo Móvil) */}
       <div className="lg:hidden flex bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-white/10 sticky top-0 z-10 flex-shrink-0">
