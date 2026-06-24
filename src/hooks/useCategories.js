@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { DEFAULT_CATEGORIES } from '../data/catalogConfig'
 import { loadRemoteCatalog, rememberSlice, pushRemoteCatalog } from '../utils/remoteStore'
 
@@ -35,13 +35,17 @@ function loadCategories() {
 
 export function useCategories() {
   const [categories, setCategories] = useState(loadCategories)
+  // Igual que en useProducts: no dejar que la respuesta (vieja y lenta) del fetch
+  // a la nube pise una edición local ya guardada.
+  const localEdited = useRef(false)
 
   // Traer las categorías publicadas en la nube (si hay backend configurado).
   useEffect(() => {
     rememberSlice('categories', categories)
     let alive = true
     loadRemoteCatalog().then((remote) => {
-      if (!alive || !remote || !Array.isArray(remote.categories)) return
+      if (!alive || localEdited.current) return
+      if (!remote || !Array.isArray(remote.categories)) return
       const clean = sanitize(remote.categories)
       if (!clean.length) return
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(clean)) } catch {}
@@ -52,6 +56,7 @@ export function useCategories() {
   }, [])
 
   const saveCategories = (next) => {
+    localEdited.current = true
     const clean = sanitize(next)
     const final = clean.length ? clean : [...DEFAULT_CATEGORIES]
     localStorage.setItem(STORAGE_KEY, JSON.stringify(final))

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { products as defaultProducts } from '../data/products'
 import { MODELS } from '../data/catalogConfig'
 import { loadRemoteCatalog, rememberSlice, pushRemoteCatalog } from '../utils/remoteStore'
@@ -82,6 +82,11 @@ function loadProducts() {
 
 export function useProducts() {
   const [products, setProducts] = useState(loadProducts)
+  // Si el dueño edita y guarda mientras el fetch de la nube (lento en el celular)
+  // todavía está en vuelo, esa respuesta llega DESPUÉS y pisaba la edición recién
+  // hecha (en memoria, en localStorage y en el snapshot que se sube). Esta bandera
+  // marca que ya hubo una edición local para no pisarla con la versión vieja.
+  const localEdited = useRef(false)
 
   // Al abrir, traer el catálogo publicado en la nube (si hay backend configurado).
   // Mientras tanto se muestra lo local/los defaults; cuando llega, lo reemplaza.
@@ -89,7 +94,9 @@ export function useProducts() {
     rememberSlice('products', products)
     let alive = true
     loadRemoteCatalog().then((remote) => {
-      if (!alive || !remote || !Array.isArray(remote.products)) return
+      // No pisar ediciones locales ya guardadas con la respuesta vieja del fetch.
+      if (!alive || localEdited.current) return
+      if (!remote || !Array.isArray(remote.products)) return
       const normalized = remote.products.map(normalizeProduct)
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
       rememberSlice('products', normalized)
@@ -100,6 +107,7 @@ export function useProducts() {
 
   // Puede lanzar QuotaExceededError si las imágenes en base64 saturan localStorage
   const saveProducts = (newProducts) => {
+    localEdited.current = true
     const normalized = newProducts.map(normalizeProduct)
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
     setProducts(normalized)
