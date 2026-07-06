@@ -6,6 +6,7 @@ import {
   BackGlassIcon,
   ChargingPortIcon,
   ButtonIcon,
+  OtherRepairIcon,
   ChevronRightIcon,
 } from './Icons'
 
@@ -17,6 +18,12 @@ const REPAIRS = [
   { icon: BackGlassIcon,    nombre: 'Tapa trasera' },
   { icon: ChargingPortIcon, nombre: 'Pin de carga' },
   { icon: ButtonIcon,       nombre: 'Botones' },
+  {
+    icon: OtherRepairIcon,
+    nombre: 'Otro arreglo',
+    // Para quien no sabe qué necesita o tiene una falla distinta a las listadas.
+    mensaje: 'Hola! Mi iPhone tiene otra falla / no sé bien qué necesita. ¿Me pueden ayudar?',
+  },
 ]
 
 const waLink = (texto) =>
@@ -38,10 +45,10 @@ export default function ServiceTechnic() {
 
         {/* Chips de reparación */}
         <div className="mt-7 flex flex-wrap gap-2">
-          {REPAIRS.map(({ icon: Icon, nombre }) => (
+          {REPAIRS.map(({ icon: Icon, nombre, mensaje }) => (
             <a
               key={nombre}
-              href={waLink(`Hola! Quería consultar por la reparación de *${nombre}* de mi iPhone.`)}
+              href={waLink(mensaje || `Hola! Quería consultar por la reparación de *${nombre}* de mi iPhone.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-2 h-9 pl-3 pr-3.5 rounded-full
@@ -84,6 +91,20 @@ export default function ServiceTechnic() {
           </a>
         </div>
 
+      </div>
+
+      {/* Financiación: 3 cuotas sin interés en compras superiores a $50.000 */}
+      <div className="mt-4 rounded-2xl bg-[#0071e3]/[0.06] dark:bg-[#0a84ff]/[0.10]
+                      border border-[#0071e3]/15 dark:border-[#0a84ff]/20
+                      px-5 py-4 sm:px-6 flex items-center gap-3.5">
+        <span className="flex-none inline-flex items-center justify-center w-9 h-9 rounded-full
+                         bg-[#0071e3] dark:bg-[#0a84ff] text-white text-[15px] font-semibold tracking-tight">
+          3×
+        </span>
+        <p className="text-[13px] sm:text-[14px] leading-snug font-medium tracking-tight text-[#1d1d1f] dark:text-white">
+          <span className="font-semibold text-[#0071e3] dark:text-[#0a84ff]">3 cuotas sin interés</span>
+          {' '}en todos nuestros productos superando los $50.000.
+        </p>
       </div>
     </section>
   )

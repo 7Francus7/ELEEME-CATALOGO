@@ -98,3 +98,11 @@ export const ButtonIcon = ({ className }) => (
     <circle cx="12" cy="12" r="3.5" />
   </svg>
 )
+
+export const OtherRepairIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <circle cx="12" cy="12" r="9" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75a2.25 2.25 0 1 1 3.182 2.045c-.62.28-1.182.79-1.182 1.472V14" />
+    <path strokeLinecap="round" d="M11.75 16.75h.01" />
+  </svg>
+)
