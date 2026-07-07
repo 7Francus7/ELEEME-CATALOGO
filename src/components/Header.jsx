@@ -6,6 +6,7 @@ import {
   MoonIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ShoppingBagIcon,
 } from './Icons'
 
 function ScrollableChipsRow({ ariaLabel, children, rowClassName = '' }) {
@@ -96,6 +97,8 @@ export default function Header({
   isDark,
   onToggleDark,
   onGoHome,
+  cartCount = 0,
+  onOpenCart,
 }) {
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -134,21 +137,35 @@ export default function Header({
 
           <div className={`flex items-center transition-all duration-300 ${searchOpen ? 'flex-1' : 'ml-auto'}`}>
             {searchOpen ? (
-              <div className="flex-1 flex items-center gap-2 rounded-full bg-[#f5f5f7] px-4 py-2 dark:bg-[#1c1c1e]">
-                <SearchIcon className="w-4 h-4 text-[#86868b] flex-shrink-0" />
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Buscar productos..."
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="flex-1 bg-transparent text-sm text-[#1d1d1f] outline-none placeholder-[#86868b] dark:text-white"
-                />
+              <div className="flex items-center gap-1.5 flex-1">
+                <div className="flex-1 flex items-center gap-2 rounded-full bg-[#f5f5f7] px-4 py-2 dark:bg-[#1c1c1e]">
+                  <SearchIcon className="w-4 h-4 text-[#86868b] flex-shrink-0" />
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Buscar productos..."
+                    value={searchQuery}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="flex-1 bg-transparent text-sm text-[#1d1d1f] outline-none placeholder-[#86868b] dark:text-white"
+                  />
+                  <button
+                    onClick={handleCloseSearch}
+                    className="flex-shrink-0 text-[#86868b] transition-colors hover:text-[#1d1d1f] dark:hover:text-white"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </div>
                 <button
-                  onClick={handleCloseSearch}
-                  className="flex-shrink-0 text-[#86868b] transition-colors hover:text-[#1d1d1f] dark:hover:text-white"
+                  onClick={onOpenCart}
+                  className="relative p-2.5 flex items-center justify-center text-[#1d1d1f] transition-colors hover:text-[#0071e3] dark:text-white dark:hover:text-[#0071e3]"
+                  aria-label="Ver pedido"
                 >
-                  <XIcon className="w-4 h-4" />
+                  <ShoppingBagIcon className="w-5 h-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0071e3] text-white text-[10px] font-bold flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
                 </button>
               </div>
             ) : (
@@ -159,6 +176,18 @@ export default function Header({
                   aria-label="Buscar"
                 >
                   <SearchIcon className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={onOpenCart}
+                  className="relative p-2.5 flex items-center justify-center text-[#1d1d1f] transition-colors hover:text-[#0071e3] dark:text-white dark:hover:text-[#0071e3]"
+                  aria-label="Ver pedido"
+                >
+                  <ShoppingBagIcon className="w-5 h-5" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0071e3] text-white text-[10px] font-bold flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={onToggleDark}

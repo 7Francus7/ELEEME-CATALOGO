@@ -64,3 +64,20 @@ export const availableModelsFor = (productList) => {
   productList.forEach((product) => (product.modelos || []).forEach((model) => set.add(model)))
   return MODELS.filter((model) => set.has(model))
 }
+
+export const DEFAULT_COMMERCIAL_BANNER = {
+  enabled: true,
+  badge: 'Cuotas sin interes',
+  title: 'Hasta 6 cuotas sin interes',
+  description: 'Paga con tus tarjetas favoritas y coordina tu compra por WhatsApp en minutos.',
+  note: 'Promocion sujeta a banco emisor y disponibilidad.',
+  cards: ['Visa', 'Mastercard', 'American Express', 'Naranja X'],
+  perks: ['Sin recargo', 'Compra segura', 'Atencion personalizada'],
+}
+
+export const TRUST_STRIP_ITEMS = [
+  'Atencion por WhatsApp',
+  'Productos con stock actualizado',
+  'Retiro coordinado',
+  'Asesoramiento para elegir modelo',
+]

@@ -1,6 +1,15 @@
 import ProductCard from './ProductCard'
 
-export default function ProductGrid({ products, onOpen, searchQuery, selectedCategory, activeModel, showTitle, onClearSearch }) {
+export default function ProductGrid({
+  products,
+  onOpen,
+  onAddToCart,
+  searchQuery,
+  selectedCategory,
+  activeModel,
+  showTitle,
+  onClearSearch,
+}) {
   if (products.length === 0) {
     const hasFilter = searchQuery || (selectedCategory && selectedCategory !== 'Todos')
     return (
@@ -45,7 +54,12 @@ export default function ProductGrid({ products, onOpen, searchQuery, selectedCat
             key={product.id}
             className={`animate-slide-up stagger-${Math.min(i + 1, 12)}`}
           >
-            <ProductCard product={product} onOpen={onOpen} activeModel={activeModel} />
+            <ProductCard
+              product={product}
+              onOpen={onOpen}
+              onAddToCart={onAddToCart}
+              activeModel={activeModel}
+            />
           </div>
         ))}
       </div>

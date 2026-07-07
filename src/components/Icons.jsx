@@ -1,4 +1,4 @@
-// SVG icons inline — sin dependencias externas
+// SVG icons inline, sin dependencias externas
 
 export const SearchIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -48,7 +48,30 @@ export const InstagramIcon = ({ className }) => (
   </svg>
 )
 
-// ─── Iconos de servicio técnico (estilo de línea, stroke 1.6) ───────────────────
+export const ShoppingBagIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6V5.25a4.5 4.5 0 1 0-9 0V6M3.75 8.25h16.5l-1.2 10.205A2.25 2.25 0 0 1 16.814 20.5H7.186a2.25 2.25 0 0 1-2.236-2.045L3.75 8.25Z" />
+  </svg>
+)
+
+export const PlusIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 5.25v13.5M5.25 12h13.5" />
+  </svg>
+)
+
+export const MinusIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 12h13.5" />
+  </svg>
+)
+
+export const TrashIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9 14.394 18m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21.75H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916A1.125 1.125 0 0 0 14.625 3.75h-5.25A1.125 1.125 0 0 0 8.25 4.875v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+  </svg>
+)
+
 export const WrenchIcon = ({ className }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />

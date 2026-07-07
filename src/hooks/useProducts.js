@@ -6,6 +6,7 @@ import { loadRemoteCatalog, rememberSlice, pushRemoteCatalog } from '../utils/re
 const STORAGE_KEY = 'eleeme_catalog_v4'
 const LEGACY_STORAGE_KEY = 'eleeme_catalog_v3'
 const VALID_MODELS = new Set(MODELS)
+const DEFAULT_PRODUCT_MAP = new Map(defaultProducts.map((product) => [product.id, product]))
 
 function inferLegacyCategory(product) {
   const name = `${product?.nombre || ''} ${product?.tag || ''}`.toLowerCase()
@@ -14,49 +15,58 @@ function inferLegacyCategory(product) {
   if (name.includes('jbl')) return 'JBL'
   if (name.includes('cable') || name.includes('lightning') || name.includes('usb-c')) return 'Cables'
   if (name.includes('vidrio templado')) return 'Vidrio templado'
-  if (name.includes('cámara')) return 'Protectores de cámara'
+  if (name.includes('camara')) return 'Protectores de cámara'
   if (name.includes('cargador') || name.includes('magsafe')) return 'Cargadores'
   return 'Fundas'
 }
 
 function normalizeProduct(product) {
-  // Las categorías ahora son editables por el cliente, así que no se valida contra
-  // una lista fija: se respeta la categoría guardada. Solo se infiere si falta o
-  // si es el bucket genérico legacy 'Accesorios'.
-  const stored = product?.categoria
+  const defaults = DEFAULT_PRODUCT_MAP.get(product?.id) || {}
+  const storedCategory = product?.categoria ?? defaults.categoria
   const categoria =
-    stored && stored !== 'Accesorios' ? stored : inferLegacyCategory(product)
+    storedCategory && storedCategory !== 'Accesorios' ? storedCategory : inferLegacyCategory(product)
 
   const knownModels = []
   const extraModels = []
-  ;(product?.modelos || []).forEach((model) => {
+  ;(product?.modelos || defaults.modelos || []).forEach((model) => {
     if (VALID_MODELS.has(model)) knownModels.push(model)
     else if (model) extraModels.push(model)
   })
 
-  // Migración a multimedia: garantiza siempre arrays imagenes[] y videos[].
-  // Catálogos viejos guardaban una sola foto (imagen_url) y un solo video
-  // (video_url / video_storage_key); acá se convierten a los nuevos arrays.
   const imagenes = Array.isArray(product?.imagenes) && product.imagenes.length
     ? product.imagenes.filter(Boolean)
-    : (product?.imagen_url ? [product.imagen_url] : [])
+    : Array.isArray(defaults.imagenes) && defaults.imagenes.length
+      ? defaults.imagenes.filter(Boolean)
+      : (product?.imagen_url || defaults.imagen_url ? [product?.imagen_url || defaults.imagen_url] : [])
 
   let videos
   if (Array.isArray(product?.videos)) {
-    videos = product.videos.filter((v) => v && (v.key || v.url))
+    videos = product.videos.filter((video) => video && (video.key || video.url))
+  } else if (Array.isArray(defaults.videos)) {
+    videos = defaults.videos.filter((video) => video && (video.key || video.url))
   } else {
     videos = []
-    if (product?.video_storage_key) videos.push({ key: product.video_storage_key })
-    if (product?.video_url) videos.push({ url: product.video_url })
+    if (product?.video_storage_key || defaults.video_storage_key) {
+      videos.push({ key: product?.video_storage_key || defaults.video_storage_key })
+    }
+    if (product?.video_url || defaults.video_url) {
+      videos.push({ url: product?.video_url || defaults.video_url })
+    }
   }
 
   return {
+    ...defaults,
     ...product,
     categoria,
     modelos: [...MODELS.filter((model) => knownModels.includes(model)), ...extraModels],
     imagenes,
     videos,
     imagen_url: imagenes[0] || '',
+    handle: product?.handle || defaults.handle || String(product?.id || ''),
+    related: Array.isArray(product?.related) ? product.related.filter(Boolean) : (defaults.related || []),
+    badges: Array.isArray(product?.badges) ? product.badges.filter(Boolean) : (defaults.badges || []),
+    visible: product?.visible !== false && defaults.visible !== false,
+    manualOrder: Number.isFinite(product?.manualOrder) ? product.manualOrder : (defaults.manualOrder ?? 9999),
   }
 }
 
@@ -65,7 +75,6 @@ function parseStoredProducts(raw) {
   return Array.isArray(parsed) ? parsed.map(normalizeProduct) : defaultProducts
 }
 
-// Carga productos desde localStorage; si no hay datos, usa los defaults de products.js
 function loadProducts() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -105,7 +114,6 @@ export function useProducts() {
     return () => { alive = false }
   }, [])
 
-  // Puede lanzar QuotaExceededError si las imágenes en base64 saturan localStorage
   const saveProducts = (newProducts) => {
     localEdited.current = true
     const normalized = newProducts.map(normalizeProduct)
@@ -116,7 +124,6 @@ export function useProducts() {
     pushRemoteCatalog()
   }
 
-  // Restaura el catálogo de ejemplo original
   const resetToDefaults = () => {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(LEGACY_STORAGE_KEY)

@@ -10,40 +10,38 @@ import {
   ChevronRightIcon,
 } from './Icons'
 
-// Servicios de reparación. Cada uno abre WhatsApp con un mensaje pre-cargado.
 const REPAIRS = [
-  { icon: ScreenIcon,       nombre: 'Pantalla' },
-  { icon: BatteryIcon,      nombre: 'Batería' },
-  { icon: CameraIcon,       nombre: 'Cámara' },
-  { icon: BackGlassIcon,    nombre: 'Tapa trasera' },
+  { icon: ScreenIcon, nombre: 'Pantalla' },
+  { icon: BatteryIcon, nombre: 'Batería' },
+  { icon: CameraIcon, nombre: 'Cámara' },
+  { icon: BackGlassIcon, nombre: 'Tapa trasera' },
   { icon: ChargingPortIcon, nombre: 'Pin de carga' },
-  { icon: ButtonIcon,       nombre: 'Botones' },
+  { icon: ButtonIcon, nombre: 'Botones' },
   {
     icon: OtherRepairIcon,
     nombre: 'Otro arreglo',
-    // Para quien no sabe qué necesita o tiene una falla distinta a las listadas.
     mensaje: 'Hola! Mi iPhone tiene otra falla / no sé bien qué necesita. ¿Me pueden ayudar?',
   },
 ]
 
-const waLink = (texto) =>
-  `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(texto)}`
+const waLink = (text) => `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`
 
 export default function ServiceTechnic() {
   return (
-    <section className="pt-32 sm:pt-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-in">
-      <div className="rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.06] px-6 py-8 sm:px-10 sm:py-10">
+    <section className="px-4 sm:px-6 lg:px-8 pb-16 max-w-7xl mx-auto">
+      <div className="rounded-3xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.06] px-6 py-8 sm:px-10">
+        <div className="max-w-2xl">
+          <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#86868b] mb-3">
+            Servicio técnico
+          </p>
+          <h2 className="text-[24px] sm:text-[30px] leading-[1.1] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+            ¿También necesitás reparar tu iPhone?
+          </h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-[#6e6e73] dark:text-[#86868b]">
+            El catálogo sigue siendo la ruta principal. Si además tenés una falla, podés abrir una consulta rápida por WhatsApp desde acá.
+          </p>
+        </div>
 
-        {/* Encabezado */}
-        <p className="text-[11px] font-semibold tracking-[0.16em] uppercase text-[#86868b] mb-3">
-          Servicio Técnico
-        </p>
-        <h1 className="text-[26px] sm:text-[34px] leading-[1.15] font-semibold tracking-tight text-[#1d1d1f] dark:text-white max-w-xl">
-          Reparamos tu iPhone
-          <span className="text-[#86868b]"> Servicio técnico especializado.</span>
-        </h1>
-
-        {/* Chips de reparación */}
         <div className="mt-7 flex flex-wrap gap-2">
           {REPAIRS.map(({ icon: Icon, nombre, mensaje }) => (
             <a
@@ -51,11 +49,7 @@ export default function ServiceTechnic() {
               href={waLink(mensaje || `Hola! Quería consultar por la reparación de *${nombre}* de mi iPhone.`)}
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2 h-9 pl-3 pr-3.5 rounded-full
-                         border border-black/[0.08] dark:border-white/[0.10]
-                         text-[#1d1d1f] dark:text-white/90
-                         hover:border-[#0071e3] hover:text-[#0071e3] dark:hover:text-[#0a84ff]
-                         transition-colors duration-200 active:scale-[0.97]"
+              className="group inline-flex items-center gap-2 h-9 pl-3 pr-3.5 rounded-full border border-black/[0.08] dark:border-white/[0.10] text-[#1d1d1f] dark:text-white/90 hover:border-[#0071e3] hover:text-[#0071e3] transition-colors duration-200 active:scale-[0.97]"
             >
               <Icon className="w-[18px] h-[18px] text-[#86868b] group-hover:text-current transition-colors duration-200" />
               <span className="text-[13px] font-medium tracking-tight">{nombre}</span>
@@ -63,19 +57,12 @@ export default function ServiceTechnic() {
           ))}
         </div>
 
-        {/* Modelos que trabajamos */}
-        <p className="mt-5 text-[13px] font-medium tracking-tight text-[#86868b]">
-          Todos los modelos, del iPhone 11 al iPhone 17 Pro Max.
-        </p>
-
-        {/* Acciones */}
-        <div className="mt-8 flex items-center gap-5">
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
           <a
             href={waLink('Hola! Mi iPhone tiene una falla y me gustaría un diagnóstico.')}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-[15px] font-semibold tracking-tight
-                       text-[#0071e3] dark:text-[#0a84ff] hover:gap-2.5 transition-all duration-200"
+            className="inline-flex items-center gap-1.5 text-[15px] font-semibold tracking-tight text-[#0071e3] hover:gap-2.5 transition-all duration-200"
           >
             Diagnosticar falla
             <ChevronRightIcon className="w-4 h-4" />
@@ -87,10 +74,9 @@ export default function ServiceTechnic() {
             rel="noopener noreferrer"
             className="text-[15px] font-medium text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white transition-colors duration-200"
           >
-            Instagram
+            Ver Instagram
           </a>
         </div>
-
       </div>
 
       {/* Financiación: 3 cuotas sin interés en compras superiores a $50.000 */}

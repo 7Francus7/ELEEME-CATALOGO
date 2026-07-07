@@ -1,28 +1,61 @@
-import { useState, useMemo, useEffect } from 'react'
-import { MODEL_CATEGORIES, availableModelsFor } from './data/catalogConfig'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  MODEL_CATEGORIES,
+  TRUST_STRIP_ITEMS,
+  availableModelsFor,
+} from './data/catalogConfig'
+import { packs } from './data/packs'
 import { useProducts } from './hooks/useProducts'
 import { useCategories } from './hooks/useCategories'
+import { useCommercialBanner } from './hooks/useCommercialBanner'
+import { useCart } from './hooks/useCart'
 import Header from './components/Header'
+import CommercialBanner from './components/CommercialBanner'
+import CatalogHero from './components/CatalogHero'
+import CuratedSections from './components/CuratedSections'
+import PacksSection from './components/PacksSection'
 import ServiceTechnic from './components/ServiceTechnic'
 import ProductGrid from './components/ProductGrid'
 import ProductModal from './components/ProductModal'
+import CartSheet from './components/CartSheet'
+import CartSummaryBar from './components/CartSummaryBar'
 import AdminPanel from './components/AdminPanel'
 import Footer from './components/Footer'
+import TrustStrip from './components/TrustStrip'
+import {
+  getCuratedCollections,
+  getRelatedProducts,
+  isProductVisible,
+  sortProductsForCatalog,
+} from './utils/catalogSelectors'
+import { visiblePacks } from './utils/packSelectors'
 
 const DARK_KEY = 'eleeme_dark_mode'
 
 function initDark() {
   const stored = localStorage.getItem(DARK_KEY)
   if (stored !== null) return stored === 'true'
-  // Respetar preferencia del sistema si no hay setting guardado
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
 
 export default function App() {
   const { products, saveProducts, resetToDefaults } = useProducts()
   const { categories, saveCategories, resetCategories } = useCategories()
+  const { bannerConfig, saveBannerConfig, resetBannerConfig } = useCommercialBanner()
+  const {
+    items: cartItems,
+    totalItems: cartCount,
+    totalPrice: cartTotal,
+    whatsappUrl,
+    addItem,
+    incrementItem,
+    decrementItem,
+    removeItem,
+    clearCart,
+    addPack,
+  } = useCart(products, packs)
 
-  // Lista que ve el visitante: 'Todos' siempre primero
+  const catalogRef = useRef(null)
   const navCategories = useMemo(() => ['Todos', ...categories], [categories])
 
   const [selectedCategory, setSelectedCategory] = useState('Todos')
@@ -30,19 +63,19 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [adminOpen, setAdminOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
+  const [bannerDismissed, setBannerDismissed] = useState(false)
   const [isDark, setIsDark] = useState(() => {
     const dark = initDark()
     if (dark) document.documentElement.classList.add('dark')
     return dark
   })
 
-  // Cambiar de categoría reinicia el filtro de modelo
-  const handleCategoryChange = (cat) => {
-    setSelectedCategory(cat)
+  const handleCategoryChange = (category) => {
+    setSelectedCategory(category)
     setSelectedModel('Todos')
   }
 
-  // Volver al inicio: limpia categoría, modelo y búsqueda
   const goHome = () => {
     setSelectedCategory('Todos')
     setSelectedModel('Todos')
@@ -50,52 +83,61 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  // Registra un email para avisar cuando vuelva el stock de un producto.
-  // Devuelve 'added' | 'duplicate' | 'invalid'
+  const scrollToCatalog = () => {
+    catalogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   const handleNotifyRestock = (productId, email) => {
     const clean = (email || '').trim().toLowerCase()
     if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return 'invalid'
-    const product = products.find((p) => p.id === productId)
+
+    const product = products.find((entry) => entry.id === productId)
     const list = product?.notificar_cuando_stock || []
-    if (list.some((e) => e.toLowerCase() === clean)) return 'duplicate'
-    const updated = products.map((p) =>
-      p.id === productId ? { ...p, notificar_cuando_stock: [...list, clean] } : p
+    if (list.some((entry) => entry.toLowerCase() === clean)) return 'duplicate'
+
+    const updated = products.map((entry) =>
+      entry.id === productId
+        ? { ...entry, notificar_cuando_stock: [...list, clean] }
+        : entry
     )
+
     saveProducts(updated)
     return 'added'
   }
 
-  // El filtro por modelo solo aplica en categorías de Fundas / Protectores
   const modelFilterActive = MODEL_CATEGORIES.includes(selectedCategory) && !searchQuery
 
-  // Modelos disponibles para la categoría actual (solo los que existen en el catálogo)
   const modelsForCategory = useMemo(() => {
     if (!modelFilterActive) return []
-    return availableModelsFor(products.filter((p) => p.categoria === selectedCategory))
-  }, [products, selectedCategory, modelFilterActive])
+    return availableModelsFor(products.filter((product) => product.categoria === selectedCategory))
+  }, [modelFilterActive, products, selectedCategory])
 
-  // Filtrado instantáneo por categoría + modelo + búsqueda
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return products.filter((product) => {
       const matchesCategory =
-        selectedCategory === 'Todos' || p.categoria === selectedCategory
+        selectedCategory === 'Todos' || product.categoria === selectedCategory
 
       const matchesModel =
         !modelFilterActive ||
         selectedModel === 'Todos' ||
-        (p.modelos || []).includes(selectedModel)
+        (product.modelos || []).includes(selectedModel)
 
-      const q = searchQuery.trim().toLowerCase()
+      const query = searchQuery.trim().toLowerCase()
       const matchesSearch =
-        !q ||
-        p.nombre.toLowerCase().includes(q) ||
-        p.descripcion.toLowerCase().includes(q) ||
-        p.compatible_con.toLowerCase().includes(q) ||
-        p.categoria.toLowerCase().includes(q)
+        !query ||
+        product.nombre.toLowerCase().includes(query) ||
+        product.descripcion.toLowerCase().includes(query) ||
+        product.compatible_con.toLowerCase().includes(query) ||
+        product.categoria.toLowerCase().includes(query)
 
       return matchesCategory && matchesModel && matchesSearch
     })
-  }, [products, selectedCategory, selectedModel, modelFilterActive, searchQuery])
+  }, [modelFilterActive, products, searchQuery, selectedCategory, selectedModel])
+
+  const sortedProducts = useMemo(
+    () => sortProductsForCatalog(filteredProducts, { query: searchQuery }),
+    [filteredProducts, searchQuery]
+  )
 
   const toggleDark = () => {
     const next = !isDark
@@ -104,24 +146,45 @@ export default function App() {
     localStorage.setItem(DARK_KEY, String(next))
   }
 
-  // Si el cliente borra/renombra la categoría activa, volver a 'Todos'
+  const handleAddToCart = (product, model = null) => addItem(product, model)
+
   useEffect(() => {
     if (selectedCategory !== 'Todos' && !categories.includes(selectedCategory)) {
       setSelectedCategory('Todos')
     }
   }, [categories, selectedCategory])
 
-  // Bloquear scroll del body cuando el admin o modal están abiertos
   useEffect(() => {
-    document.body.style.overflow = (adminOpen || selectedProduct) ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [adminOpen, selectedProduct])
+    document.body.style.overflow = adminOpen || selectedProduct || cartOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [adminOpen, cartOpen, selectedProduct])
 
-  // Padding superior extra cuando el header muestra la fila de modelos
+  useEffect(() => {
+    setBannerDismissed(false)
+  }, [bannerConfig])
+
   const showHero = !searchQuery && selectedCategory === 'Todos'
-
-  // Modelo activo para mostrar stock (null si no hay filtro de modelo aplicado)
   const activeModel = modelFilterActive && selectedModel !== 'Todos' ? selectedModel : null
+  const curatedCollections = useMemo(
+    () => getCuratedCollections(products),
+    [products]
+  )
+  const visibleProductCount = useMemo(
+    () => products.filter(isProductVisible).length,
+    [products]
+  )
+  const sortedPacks = useMemo(
+    () => visiblePacks(packs, products),
+    [products]
+  )
+  const activeProduct =
+    products.find((product) => product.id === selectedProduct?.id) || selectedProduct || null
+  const relatedProducts = useMemo(
+    () => getRelatedProducts(products, activeProduct, 3),
+    [activeProduct, products]
+  )
 
   return (
     <div className="min-h-screen bg-[#f5f5f7] dark:bg-black transition-colors duration-300">
@@ -137,38 +200,104 @@ export default function App() {
         isDark={isDark}
         onToggleDark={toggleDark}
         onGoHome={goHome}
+        cartCount={cartCount}
+        onOpenCart={() => setCartOpen(true)}
       />
 
-      <main>
-        {showHero && (
-          <ServiceTechnic />
+      <main className={cartCount > 0 ? 'pb-24 sm:pb-28' : ''}>
+        {showHero && bannerConfig.enabled && !bannerDismissed && (
+          <CommercialBanner config={bannerConfig} onDismiss={() => setBannerDismissed(true)} />
         )}
-        <div className={showHero ? 'pt-8 sm:pt-12' : (modelsForCategory.length > 0 ? 'pt-40 sm:pt-44' : 'pt-28 sm:pt-32')}>
+        {showHero && (
+          <>
+            <CatalogHero
+              onBrowseCatalog={scrollToCatalog}
+              productCount={visibleProductCount}
+            />
+            <TrustStrip items={TRUST_STRIP_ITEMS} />
+          </>
+        )}
+
+        {showHero && (
+          <CuratedSections
+            collections={curatedCollections}
+            activeModel={activeModel}
+            onOpenProduct={setSelectedProduct}
+            onAddToCart={handleAddToCart}
+          />
+        )}
+
+        {showHero && (
+          <PacksSection
+            packs={sortedPacks}
+            products={products}
+            onAddPack={addPack}
+          />
+        )}
+
+        <div
+          ref={catalogRef}
+          className={
+            showHero
+              ? 'scroll-mt-28 sm:scroll-mt-32 pt-6 sm:pt-8'
+              : modelsForCategory.length > 0
+                ? 'scroll-mt-40 sm:scroll-mt-44 pt-40 sm:pt-44'
+                : 'scroll-mt-28 sm:scroll-mt-32 pt-28 sm:pt-32'
+          }
+        >
           <ProductGrid
-            products={filteredProducts}
+            products={sortedProducts}
             onOpen={setSelectedProduct}
+            onAddToCart={handleAddToCart}
             searchQuery={searchQuery}
             selectedCategory={selectedCategory}
             activeModel={activeModel}
             showTitle={showHero}
-            onClearSearch={() => { handleCategoryChange('Todos'); setSearchQuery('') }}
+            onClearSearch={() => {
+              handleCategoryChange('Todos')
+              setSearchQuery('')
+            }}
           />
         </div>
+
+        {showHero && <ServiceTechnic />}
       </main>
 
       <Footer onAdminOpen={() => setAdminOpen(true)} />
 
-      {/* Modal de detalle de producto */}
       {selectedProduct && (
         <ProductModal
-          product={products.find((p) => p.id === selectedProduct.id) || selectedProduct}
+          product={activeProduct}
           activeModel={activeModel}
+          relatedProducts={relatedProducts}
           onNotifyRestock={handleNotifyRestock}
+          onAddToCart={handleAddToCart}
+          onOpenProduct={setSelectedProduct}
           onClose={() => setSelectedProduct(null)}
         />
       )}
 
-      {/* Panel de administración (solo accesible con contraseña) */}
+      {cartOpen && (
+        <CartSheet
+          isOpen={cartOpen}
+          items={cartItems}
+          totalItems={cartCount}
+          totalPrice={cartTotal}
+          whatsappUrl={whatsappUrl}
+          onClose={() => setCartOpen(false)}
+          onIncrement={incrementItem}
+          onDecrement={decrementItem}
+          onRemove={removeItem}
+          onClear={clearCart}
+        />
+      )}
+
+      <CartSummaryBar
+        totalItems={cartCount}
+        totalPrice={cartTotal}
+        onOpen={() => setCartOpen(true)}
+      />
+
       {adminOpen && (
         <AdminPanel
           products={products}
@@ -177,6 +306,9 @@ export default function App() {
           categories={categories}
           onSaveCategories={saveCategories}
           onResetCategories={resetCategories}
+          bannerConfig={bannerConfig}
+          onSaveBannerConfig={saveBannerConfig}
+          onResetBannerConfig={resetBannerConfig}
           onClose={() => setAdminOpen(false)}
         />
       )}

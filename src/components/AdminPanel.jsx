@@ -8,6 +8,7 @@ import {
 } from '../utils/remoteStore'
 import { XIcon, ChevronLeftIcon } from './Icons'
 import CatalogImage from './CatalogImage'
+import BannerManager from './BannerManager'
 
 // ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
 const ADMIN_PASSWORD = 'eleeme2024'
@@ -206,9 +207,21 @@ function CategoryManager({ categories, products, onSaveProducts, onSaveCategorie
   )
 }
 
-export default function AdminPanel({ products, onSave, onReset, categories, onSaveCategories, onResetCategories, onClose }) {
+export default function AdminPanel({
+  products,
+  onSave,
+  onReset,
+  categories,
+  onSaveCategories,
+  onResetCategories,
+  bannerConfig,
+  onSaveBannerConfig,
+  onResetBannerConfig,
+  onClose,
+}) {
   const [authenticated, setAuthenticated] = useState(false)
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false)
+  const [bannerManagerOpen, setBannerManagerOpen] = useState(false)
   const [pwInput, setPwInput] = useState('')
   const [pwError, setPwError] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -613,6 +626,11 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
     p.categoria.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
+  const flashSaved = (message) => {
+    setSaveStatus(message)
+    setTimeout(() => setSaveStatus(''), 2500)
+  }
+
   if (!authenticated) {
     return (
       <div className="fixed inset-0 z-50 bg-[#f5f5f7] dark:bg-black flex items-center justify-center p-4">
@@ -753,6 +771,13 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
               className="w-full text-xs font-black uppercase tracking-widest text-[#0071e3] bg-blue-50 dark:bg-blue-500/10 py-3 rounded-2xl active:scale-95 transition-all"
             >
               🏷️ Editar categorías
+            </button>
+            <button
+              type="button"
+              onClick={() => setBannerManagerOpen(true)}
+              className="w-full text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 py-3 rounded-2xl active:scale-95 transition-all"
+            >
+              💳 Editar banner cuotas
             </button>
           </div>
 
@@ -1297,6 +1322,16 @@ export default function AdminPanel({ products, onSave, onReset, categories, onSa
           onSaveCategories={onSaveCategories}
           onReset={onResetCategories}
           onClose={() => setCategoryManagerOpen(false)}
+        />
+      )}
+
+      {bannerManagerOpen && (
+        <BannerManager
+          config={bannerConfig}
+          onSave={onSaveBannerConfig}
+          onReset={onResetBannerConfig}
+          onSaved={flashSaved}
+          onClose={() => setBannerManagerOpen(false)}
         />
       )}
     </div>

@@ -26,6 +26,100 @@ export const MODELS = [
   'iPhone 12',
 ]
 
+const PRODUCT_COMMERCIAL_FIELDS = {
+  1: {
+    handle: 'funda-metal-color-blanco',
+    related: ['protector-camara-vidrio-templado', 'cargador-magsafe-15w', 'soporte-anillo-magsafe'],
+    badges: ['mas-vendido'],
+    visible: true,
+    manualOrder: 10,
+  },
+  2: {
+    handle: 'funda-transparente-reforzada',
+    related: ['protector-camara-vidrio-templado', 'cargador-pared-20w', 'cable-usbc-lightning-1m'],
+    badges: ['proteccion'],
+    visible: true,
+    manualOrder: 20,
+  },
+  3: {
+    handle: 'funda-antigolpes-negra',
+    related: ['protector-camara-vidrio-templado', 'cargador-pared-20w', 'cable-usbc-lightning-1m'],
+    badges: ['proteccion'],
+    visible: true,
+    manualOrder: 30,
+  },
+  4: {
+    handle: 'funda-silicona-magsafe',
+    related: ['cargador-magsafe-15w', 'soporte-anillo-magsafe', 'cargador-pared-20w'],
+    badges: ['magsafe'],
+    visible: true,
+    manualOrder: 40,
+  },
+  5: {
+    handle: 'protector-camara-vidrio-templado',
+    related: ['funda-transparente-reforzada', 'funda-antigolpes-negra', 'protector-camara-metalico'],
+    badges: ['proteccion'],
+    visible: true,
+    manualOrder: 50,
+  },
+  6: {
+    handle: 'protector-camara-metalico',
+    related: ['funda-metal-color-blanco', 'funda-silicona-magsafe', 'protector-camara-vidrio-templado'],
+    badges: ['proteccion'],
+    visible: true,
+    manualOrder: 60,
+  },
+  7: {
+    handle: 'cargador-magsafe-15w',
+    related: ['funda-silicona-magsafe', 'soporte-anillo-magsafe', 'cargador-pared-20w'],
+    badges: ['carga'],
+    visible: true,
+    manualOrder: 70,
+  },
+  8: {
+    handle: 'cable-usbc-lightning-1m',
+    related: ['cargador-pared-20w', 'cargador-magsafe-15w', 'soporte-anillo-magsafe'],
+    badges: ['carga'],
+    visible: true,
+    manualOrder: 80,
+  },
+  9: {
+    handle: 'cargador-pared-20w',
+    related: ['cable-usbc-lightning-1m', 'cargador-magsafe-15w', 'soporte-anillo-magsafe'],
+    badges: ['carga'],
+    visible: true,
+    manualOrder: 90,
+  },
+  10: {
+    handle: 'soporte-anillo-magsafe',
+    related: ['funda-silicona-magsafe', 'cargador-magsafe-15w', 'cargador-pared-20w'],
+    badges: ['magsafe'],
+    visible: true,
+    manualOrder: 100,
+  },
+  11: {
+    handle: 'airpods-pro-2',
+    related: ['cargador-magsafe-15w', 'cargador-pared-20w', 'soporte-anillo-magsafe'],
+    badges: ['audio'],
+    visible: true,
+    manualOrder: 110,
+  },
+}
+
+export const products = BASE_PRODUCTS.map((product) => {
+  const commercial = PRODUCT_COMMERCIAL_FIELDS[product.id] || {}
+
+  return {
+    visible: true,
+    manualOrder: product.id * 10,
+    related: [],
+    badges: [],
+    handle: String(product.id),
+    ...product,
+    ...commercial,
+  }
+})
+
 // Clave de stock usada por los productos que no se filtran por modelo (cargadores, accesorios)
 export const DEFAULT_STOCK_KEY = 'Único'
 
@@ -109,6 +203,29 @@ export const hasStock = (product, model) => {
   return total === null ? null : total > 0
 }
 
+// Stock total del producto considerando todos sus modelos o su stock unico.
+export const productTotalStock = (product) => {
+  if (!product?.stock) return 0
+
+  if (!usesModels(product)) {
+    return modelStock(product, null) ?? 0
+  }
+
+  return Object.keys(product.stock).reduce((sum, model) => {
+    return sum + activeColors(product).reduce((colorSum, color) => {
+      return colorSum + (Number(product.stock?.[model]?.[color.nombre]) || 0)
+    }, 0)
+  }, 0)
+}
+
+export const productHasAnyStock = (product) => productTotalStock(product) > 0
+
+export const savingsAmount = (entry) => {
+  if (!Number.isFinite(entry?.precio_original) || !Number.isFinite(entry?.precio)) return 0
+  if (entry.precio_original <= entry.precio) return 0
+  return entry.precio_original - entry.precio
+}
+
 // ─── CATÁLOGO DE PRODUCTOS ────────────────────────────────────────────────────
 // Campos:
 //   categoria → una de CATEGORIES (sin 'Todos')
@@ -122,7 +239,7 @@ export const hasStock = (product, model) => {
 //   stock → { [modelo|DEFAULT_STOCK_KEY]: { [nombreColor]: cantidad } }
 //   notificar_cuando_stock → emails que esperan aviso de restock
 //   stock_gestion → 'manual' | 'automatico'
-export const products = [
+const BASE_PRODUCTS = [
   {
     id: 1,
     nombre: 'Funda Metal Color Blanco',
