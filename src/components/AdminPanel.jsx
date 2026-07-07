@@ -777,7 +777,7 @@ export default function AdminPanel({
               onClick={() => setBannerManagerOpen(true)}
               className="w-full text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 py-3 rounded-2xl active:scale-95 transition-all"
             >
-              💳 Editar banner cuotas
+              💳 Editar strip cuotas
             </button>
           </div>
 
@@ -802,7 +802,7 @@ export default function AdminPanel({
                     <h4 className="text-[14px] font-bold text-[#1d1d1f] dark:text-white truncate tracking-tight">{p.nombre}</h4>
                     <p className="text-[12px] font-medium text-[#86868b] flex items-center gap-2">
                       {formatPrice(p.precio)}
-                      {p.destacado && <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase">Banner</span>}
+                      {p.destacado && <span className="bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase">Destacado</span>}
                     </p>
                   </div>
 
@@ -1115,7 +1115,7 @@ export default function AdminPanel({
                 </div>
               </div>
 
-              {/* Bloque: Etiquetas y Banner */}
+              {/* Bloque: Etiquetas y destacado */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm">
                   <label className="admin-label">Etiqueta Visual (Badge)</label>
@@ -1129,7 +1129,7 @@ export default function AdminPanel({
                 <div className="bg-white dark:bg-[#1c1c1e] p-6 sm:p-8 rounded-[32px] shadow-sm flex items-center justify-between gap-6">
                   <div className="flex-1">
                     <p className="text-sm font-black text-[#1d1d1f] dark:text-white uppercase tracking-tight">Destacar Producto</p>
-                    <p className="text-[11px] text-[#86868b] font-medium leading-relaxed mt-1">Aparecerá en el banner principal al inicio.</p>
+                    <p className="text-[11px] text-[#86868b] font-medium leading-relaxed mt-1">Se usa para marcar el producto como destacado dentro del catalogo.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                     <input type="checkbox" checked={form.destacado} onChange={(e) => setForm(p => ({...p, destacado: e.target.checked}))} className="sr-only peer" />

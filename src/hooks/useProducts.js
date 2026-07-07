@@ -8,6 +8,13 @@ const LEGACY_STORAGE_KEY = 'eleeme_catalog_v3'
 const VALID_MODELS = new Set(MODELS)
 const DEFAULT_PRODUCT_MAP = new Map(defaultProducts.map((product) => [product.id, product]))
 
+function withSequentialManualOrder(products) {
+  return products.map((product, index) => ({
+    ...product,
+    manualOrder: (index + 1) * 10,
+  }))
+}
+
 function inferLegacyCategory(product) {
   const name = `${product?.nombre || ''} ${product?.tag || ''}`.toLowerCase()
   if (name.includes('airpods') || name.includes('auricular')) return 'Auriculares'
@@ -72,7 +79,9 @@ function normalizeProduct(product) {
 
 function parseStoredProducts(raw) {
   const parsed = JSON.parse(raw)
-  return Array.isArray(parsed) ? parsed.map(normalizeProduct) : defaultProducts
+  return Array.isArray(parsed)
+    ? withSequentialManualOrder(parsed.map(normalizeProduct))
+    : withSequentialManualOrder(defaultProducts.map(normalizeProduct))
 }
 
 function loadProducts() {
@@ -86,7 +95,7 @@ function loadProducts() {
       return migrated
     }
   } catch {}
-  return defaultProducts.map(normalizeProduct)
+  return withSequentialManualOrder(defaultProducts.map(normalizeProduct))
 }
 
 export function useProducts() {
@@ -106,7 +115,7 @@ export function useProducts() {
       // No pisar ediciones locales ya guardadas con la respuesta vieja del fetch.
       if (!alive || localEdited.current) return
       if (!remote || !Array.isArray(remote.products)) return
-      const normalized = remote.products.map(normalizeProduct)
+      const normalized = withSequentialManualOrder(remote.products.map(normalizeProduct))
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
       rememberSlice('products', normalized)
       setProducts(normalized)
@@ -116,7 +125,7 @@ export function useProducts() {
 
   const saveProducts = (newProducts) => {
     localEdited.current = true
-    const normalized = newProducts.map(normalizeProduct)
+    const normalized = withSequentialManualOrder(newProducts.map(normalizeProduct))
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
     setProducts(normalized)
     // Sincronizar con la nube (no hace nada si no hay token de admin cargado)
@@ -127,7 +136,7 @@ export function useProducts() {
   const resetToDefaults = () => {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(LEGACY_STORAGE_KEY)
-    setProducts(defaultProducts.map(normalizeProduct))
+    setProducts(withSequentialManualOrder(defaultProducts.map(normalizeProduct)))
   }
 
   return { products, saveProducts, resetToDefaults }

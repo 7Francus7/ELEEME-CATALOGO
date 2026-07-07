@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DEFAULT_COMMERCIAL_BANNER } from '../data/catalogConfig'
-import CommercialBanner from './CommercialBanner'
+import FinancingStrip from './FinancingStrip'
 import { XIcon } from './Icons'
 
 function linesFromList(list) {
@@ -39,14 +39,14 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
       cards: listFromText(draft.cardsText, DEFAULT_COMMERCIAL_BANNER.cards),
       perks: listFromText(draft.perksText, DEFAULT_COMMERCIAL_BANNER.perks),
     })
-    onSaved?.('Banner actualizado')
+    onSaved?.('Strip actualizado')
     onClose()
   }
 
   const handleReset = () => {
-    if (!window.confirm('Restaurar banner predeterminado?')) return
+    if (!window.confirm('Restaurar strip predeterminado?')) return
     onReset()
-    onSaved?.('Banner restaurado')
+    onSaved?.('Strip restaurado')
     onClose()
   }
 
@@ -71,8 +71,8 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
       >
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e]">
           <div>
-            <h2 className="text-lg font-black tracking-tight dark:text-white">Banner de cuotas</h2>
-            <p className="text-[11px] text-[#86868b] font-medium">Editable, visible u oculto desde admin.</p>
+            <h2 className="text-lg font-black tracking-tight dark:text-white">Strip de cuotas</h2>
+            <p className="text-[11px] text-[#86868b] font-medium">Franja sutil debajo del banner principal.</p>
           </div>
           <button onClick={onClose} className="p-2 text-[#86868b] hover:bg-[#f5f5f7] dark:hover:bg-[#2c2c2e] rounded-full">
             <XIcon className="w-5 h-5" />
@@ -85,8 +85,8 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
               <div className="bg-white dark:bg-[#1c1c1e] rounded-[28px] p-6 shadow-sm space-y-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-black text-[#1d1d1f] dark:text-white uppercase tracking-tight">Mostrar banner</p>
-                    <p className="text-[11px] text-[#86868b] mt-1">Si lo apagás, no se ve en el sitio.</p>
+                    <p className="text-sm font-black text-[#1d1d1f] dark:text-white uppercase tracking-tight">Mostrar strip</p>
+                    <p className="text-[11px] text-[#86868b] mt-1">Si lo apagas, deja de verse en el home.</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                     <input
@@ -101,17 +101,18 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
 
                 <div>
                   <label className="admin-label">Etiqueta superior</label>
-                  <input className="admin-input" value={draft.badge} onChange={update('badge')} placeholder="Ej: Cuotas sin interes" />
+                  <input className="admin-input" value={draft.badge} onChange={update('badge')} placeholder="Ej: Financiacion" />
                 </div>
 
                 <div>
                   <label className="admin-label">Titulo principal</label>
-                  <input className="admin-input" value={draft.title} onChange={update('title')} placeholder="Ej: Hasta 6 cuotas sin interes" />
+                  <input className="admin-input" value={draft.title} onChange={update('title')} placeholder="Ej: Hasta 6 cuotas sin interes con tarjetas seleccionadas." />
                 </div>
 
                 <div>
                   <label className="admin-label">Texto descriptivo</label>
                   <textarea rows={3} className="admin-input resize-none py-4" value={draft.description} onChange={update('description')} />
+                  <p className="text-[11px] text-[#86868b] mt-2">Queda guardado aunque hoy no se muestre en la franja.</p>
                 </div>
 
                 <div>
@@ -128,9 +129,9 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
                     className="admin-input resize-none py-4"
                     value={draft.cardsText}
                     onChange={update('cardsText')}
-                    placeholder={'Visa\nMastercard\nAmerican Express'}
+                    placeholder={'Visa\nMastercard\nAmerican Express\nNaranja X'}
                   />
-                  <p className="text-[11px] text-[#86868b] mt-2">Una por linea o separadas por coma.</p>
+                  <p className="text-[11px] text-[#86868b] mt-2">Una por linea o separadas por coma. Al final siempre aparece un `+`.</p>
                 </div>
 
                 <div>
@@ -154,7 +155,7 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
                 </div>
               </div>
               <div className="rounded-[32px] border border-dashed border-[#d6d6db] dark:border-white/10 bg-white/60 dark:bg-[#1c1c1e]/40 py-2">
-                <CommercialBanner config={previewConfig} preview />
+                <FinancingStrip config={previewConfig} preview />
               </div>
             </div>
           </div>
@@ -169,7 +170,7 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
             onClick={handleSave}
             className="ml-auto bg-black dark:bg-white dark:text-black text-white font-black uppercase tracking-widest text-xs px-6 py-3 rounded-2xl active:scale-95 transition-all"
           >
-            Guardar banner
+            Guardar strip
           </button>
         </div>
       </div>

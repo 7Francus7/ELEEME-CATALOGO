@@ -1,4 +1,4 @@
-import { productHasAnyStock, productTotalStock, savingsAmount } from '../data/products'
+import { savingsAmount } from '../data/products'
 
 export function getProductRef(product) {
   return String(product?.handle || product?.id || '')
@@ -6,10 +6,6 @@ export function getProductRef(product) {
 
 export function isProductVisible(product) {
   return product?.visible !== false
-}
-
-function hasPrice(product) {
-  return Number.isFinite(product?.precio)
 }
 
 function isPromo(product) {
@@ -41,6 +37,92 @@ function queryScore(product, query) {
   return 0
 }
 
+const STRATEGIC_SECTION_DEFINITIONS = [
+  {
+    key: 'fundas',
+    title: 'Fundas',
+    description: 'Primero lo mas pedido: fundas listas para elegir por modelo.',
+    categories: ['Fundas'],
+  },
+  {
+    key: 'proteccion',
+    title: 'Proteccion de camara',
+    description: 'Protectores y vidrios para resolver cuidado extra en misma pasada.',
+    categories: ['Protectores de cámara', 'Vidrio templado'],
+  },
+  {
+    key: 'carga',
+    title: 'Carga',
+    description: 'Cargadores y cables juntos para cerrar compra completa sin buscar aparte.',
+    categories: ['Cargadores', 'Cables', 'Battery pack', 'Funda cargador'],
+  },
+  {
+    key: 'accesorios',
+    title: 'Accesorios',
+    description: 'Soportes, correas y extras rapidos para complementar pedido.',
+    categories: ['Correas', 'Reloj', 'Personaliza tu funda', 'Funda auriculares'],
+  },
+  {
+    key: 'audio',
+    title: 'Audio',
+    description: 'Productos premium separados para no mezclar con compra base.',
+    categories: ['Auriculares', 'JBL'],
+  },
+]
+
+function uniqueCategories(values) {
+  const seen = new Set()
+  const out = []
+
+  values.forEach((value) => {
+    const name = String(value || '').trim()
+    if (!name) return
+
+    const key = name.toLowerCase()
+    if (seen.has(key)) return
+
+    seen.add(key)
+    out.push(name)
+  })
+
+  return out
+}
+
+function visibleCategorySet(products) {
+  return new Set(
+    products
+      .filter(isProductVisible)
+      .map((product) => String(product?.categoria || '').trim())
+      .filter(Boolean)
+  )
+}
+
+export function getCatalogNavigationCategories(configuredCategories, products) {
+  const used = visibleCategorySet(products)
+  const orderedConfigured = uniqueCategories(configuredCategories).filter((category) => used.has(category))
+  const missing = [...used].filter((category) => !orderedConfigured.includes(category))
+
+  return [...orderedConfigured, ...sortCategoriesForNavigation(missing)]
+}
+
+function sortCategoriesForNavigation(categories) {
+  const priority = new Map(
+    STRATEGIC_SECTION_DEFINITIONS.flatMap((section, sectionIndex) =>
+      section.categories.map((category, categoryIndex) => [
+        category,
+        sectionIndex * 10 + categoryIndex,
+      ])
+    )
+  )
+
+  return [...categories].sort((left, right) => {
+    const leftPriority = priority.get(left) ?? 999
+    const rightPriority = priority.get(right) ?? 999
+    if (leftPriority !== rightPriority) return leftPriority - rightPriority
+    return left.localeCompare(right, 'es', { sensitivity: 'base' })
+  })
+}
+
 export function sortProductsForCatalog(products, { query = '' } = {}) {
   return [...products]
     .filter(isProductVisible)
@@ -49,14 +131,10 @@ export function sortProductsForCatalog(products, { query = '' } = {}) {
       const leftProduct = left.product
       const rightProduct = right.product
 
+      const searchDiff = queryScore(rightProduct, query) - queryScore(leftProduct, query)
+      if (searchDiff !== 0) return searchDiff
+
       const comparisons = [
-        queryScore(rightProduct, query) - queryScore(leftProduct, query),
-        Number(productHasAnyStock(rightProduct)) - Number(productHasAnyStock(leftProduct)),
-        Number(hasPrice(rightProduct)) - Number(hasPrice(leftProduct)),
-        Number(isBestSeller(rightProduct)) - Number(isBestSeller(leftProduct)),
-        Number(isPromo(rightProduct)) - Number(isPromo(leftProduct)),
-        productTotalStock(rightProduct) - productTotalStock(leftProduct),
-        savingsAmount(rightProduct) - savingsAmount(leftProduct),
         (leftProduct.manualOrder ?? 9999) - (rightProduct.manualOrder ?? 9999),
         left.index - right.index,
       ]
@@ -77,13 +155,57 @@ export function getCuratedCollections(products) {
 
   const latest = [...visibleProducts]
     .sort((left, right) => {
-      const stockDiff = Number(productHasAnyStock(right)) - Number(productHasAnyStock(left))
-      if (stockDiff !== 0) return stockDiff
       return (left.manualOrder ?? 9999) - (right.manualOrder ?? 9999)
     })
     .slice(0, 4)
 
   return { promos, bestSellers, latest }
+}
+
+function buildStrategicSection(section, visibleProducts) {
+  const products = sortProductsForCatalog(
+    visibleProducts.filter((product) => section.categories.includes(product.categoria))
+  )
+
+  if (!products.length) return null
+
+  return {
+    key: section.key,
+    title: section.title,
+    description: section.description,
+    categories: section.categories,
+    products,
+  }
+}
+
+export function getStrategicCatalogSections(products, configuredCategories = []) {
+  const visibleProducts = products.filter(isProductVisible)
+  const sections = STRATEGIC_SECTION_DEFINITIONS
+    .map((section) => buildStrategicSection(section, visibleProducts))
+    .filter(Boolean)
+
+  const covered = new Set(sections.flatMap((section) => section.categories))
+  const visibleCategories = visibleCategorySet(visibleProducts)
+  const orderedFallbacks = getCatalogNavigationCategories(configuredCategories, visibleProducts)
+    .filter((category) => visibleCategories.has(category) && !covered.has(category))
+
+  orderedFallbacks.forEach((category) => {
+    const categoryProducts = sortProductsForCatalog(
+      visibleProducts.filter((product) => product.categoria === category)
+    )
+
+    if (!categoryProducts.length) return
+
+    sections.push({
+      key: `category-${category}`,
+      title: category,
+      description: 'Productos agrupados por categoria para mantener catalogo claro.',
+      categories: [category],
+      products: categoryProducts,
+    })
+  })
+
+  return sections
 }
 
 function findProductByRef(products, ref) {

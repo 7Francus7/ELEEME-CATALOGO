@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   MODEL_CATEGORIES,
-  TRUST_STRIP_ITEMS,
   availableModelsFor,
 } from './data/catalogConfig'
 import { packs } from './data/packs'
@@ -10,21 +9,22 @@ import { useCategories } from './hooks/useCategories'
 import { useCommercialBanner } from './hooks/useCommercialBanner'
 import { useCart } from './hooks/useCart'
 import Header from './components/Header'
-import CommercialBanner from './components/CommercialBanner'
 import CatalogHero from './components/CatalogHero'
+import FinancingStrip from './components/FinancingStrip'
 import CuratedSections from './components/CuratedSections'
 import PacksSection from './components/PacksSection'
-import ServiceTechnic from './components/ServiceTechnic'
+import StrategicCatalogSections from './components/StrategicCatalogSections'
 import ProductGrid from './components/ProductGrid'
 import ProductModal from './components/ProductModal'
 import CartSheet from './components/CartSheet'
 import CartSummaryBar from './components/CartSummaryBar'
 import AdminPanel from './components/AdminPanel'
 import Footer from './components/Footer'
-import TrustStrip from './components/TrustStrip'
 import {
+  getCatalogNavigationCategories,
   getCuratedCollections,
   getRelatedProducts,
+  getStrategicCatalogSections,
   isProductVisible,
   sortProductsForCatalog,
 } from './utils/catalogSelectors'
@@ -56,7 +56,11 @@ export default function App() {
   } = useCart(products, packs)
 
   const catalogRef = useRef(null)
-  const navCategories = useMemo(() => ['Todos', ...categories], [categories])
+  const catalogCategories = useMemo(
+    () => getCatalogNavigationCategories(categories, products),
+    [categories, products]
+  )
+  const navCategories = useMemo(() => ['Todos', ...catalogCategories], [catalogCategories])
 
   const [selectedCategory, setSelectedCategory] = useState('Todos')
   const [selectedModel, setSelectedModel] = useState('Todos')
@@ -64,7 +68,6 @@ export default function App() {
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [adminOpen, setAdminOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
-  const [bannerDismissed, setBannerDismissed] = useState(false)
   const [isDark, setIsDark] = useState(() => {
     const dark = initDark()
     if (dark) document.documentElement.classList.add('dark')
@@ -149,10 +152,10 @@ export default function App() {
   const handleAddToCart = (product, model = null) => addItem(product, model)
 
   useEffect(() => {
-    if (selectedCategory !== 'Todos' && !categories.includes(selectedCategory)) {
+    if (selectedCategory !== 'Todos' && !catalogCategories.includes(selectedCategory)) {
       setSelectedCategory('Todos')
     }
-  }, [categories, selectedCategory])
+  }, [catalogCategories, selectedCategory])
 
   useEffect(() => {
     document.body.style.overflow = adminOpen || selectedProduct || cartOpen ? 'hidden' : ''
@@ -161,15 +164,15 @@ export default function App() {
     }
   }, [adminOpen, cartOpen, selectedProduct])
 
-  useEffect(() => {
-    setBannerDismissed(false)
-  }, [bannerConfig])
-
   const showHero = !searchQuery && selectedCategory === 'Todos'
   const activeModel = modelFilterActive && selectedModel !== 'Todos' ? selectedModel : null
   const curatedCollections = useMemo(
     () => getCuratedCollections(products),
     [products]
+  )
+  const strategicSections = useMemo(
+    () => getStrategicCatalogSections(products, categories),
+    [categories, products]
   )
   const visibleProductCount = useMemo(
     () => products.filter(isProductVisible).length,
@@ -205,18 +208,11 @@ export default function App() {
       />
 
       <main className={cartCount > 0 ? 'pb-24 sm:pb-28' : ''}>
-        {showHero && bannerConfig.enabled && !bannerDismissed && (
-          <CommercialBanner config={bannerConfig} onDismiss={() => setBannerDismissed(true)} />
-        )}
         {showHero && (
-          <>
-            <CatalogHero
-              onBrowseCatalog={scrollToCatalog}
-              productCount={visibleProductCount}
-            />
-            <TrustStrip items={TRUST_STRIP_ITEMS} />
-          </>
+          <CatalogHero onBrowseCatalog={scrollToCatalog} />
         )}
+
+        {showHero && <FinancingStrip config={bannerConfig} />}
 
         {showHero && (
           <CuratedSections
@@ -239,28 +235,37 @@ export default function App() {
           ref={catalogRef}
           className={
             showHero
-              ? 'scroll-mt-28 sm:scroll-mt-32 pt-6 sm:pt-8'
+              ? 'scroll-mt-28 sm:scroll-mt-32 pt-8 sm:pt-10'
               : modelsForCategory.length > 0
                 ? 'scroll-mt-40 sm:scroll-mt-44 pt-40 sm:pt-44'
-                : 'scroll-mt-28 sm:scroll-mt-32 pt-28 sm:pt-32'
+              : 'scroll-mt-28 sm:scroll-mt-32 pt-28 sm:pt-32'
           }
         >
-          <ProductGrid
-            products={sortedProducts}
-            onOpen={setSelectedProduct}
-            onAddToCart={handleAddToCart}
-            searchQuery={searchQuery}
-            selectedCategory={selectedCategory}
-            activeModel={activeModel}
-            showTitle={showHero}
-            onClearSearch={() => {
-              handleCategoryChange('Todos')
-              setSearchQuery('')
-            }}
-          />
+          {showHero ? (
+            <StrategicCatalogSections
+              sections={strategicSections}
+              totalProducts={visibleProductCount}
+              activeModel={activeModel}
+              onOpen={setSelectedProduct}
+              onAddToCart={handleAddToCart}
+            />
+          ) : (
+            <ProductGrid
+              products={sortedProducts}
+              onOpen={setSelectedProduct}
+              onAddToCart={handleAddToCart}
+              searchQuery={searchQuery}
+              selectedCategory={selectedCategory}
+              activeModel={activeModel}
+              showTitle
+              onClearSearch={() => {
+                handleCategoryChange('Todos')
+                setSearchQuery('')
+              }}
+            />
+          )}
         </div>
 
-        {showHero && <ServiceTechnic />}
       </main>
 
       <Footer onAdminOpen={() => setAdminOpen(true)} />
