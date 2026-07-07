@@ -106,20 +106,6 @@ const PRODUCT_COMMERCIAL_FIELDS = {
   },
 }
 
-export const products = BASE_PRODUCTS.map((product) => {
-  const commercial = PRODUCT_COMMERCIAL_FIELDS[product.id] || {}
-
-  return {
-    visible: true,
-    manualOrder: product.id * 10,
-    related: [],
-    badges: [],
-    handle: String(product.id),
-    ...product,
-    ...commercial,
-  }
-})
-
 // Clave de stock usada por los productos que no se filtran por modelo (cargadores, accesorios)
 export const DEFAULT_STOCK_KEY = 'Único'
 
@@ -580,3 +566,17 @@ const BASE_PRODUCTS = [
     stock_gestion: 'manual',
   },
 ]
+
+export const products = BASE_PRODUCTS.map((product) => {
+  const commercial = PRODUCT_COMMERCIAL_FIELDS[product.id] || {}
+
+  return {
+    visible: true,
+    manualOrder: product.id * 10,
+    related: [],
+    badges: [],
+    handle: String(product.id),
+    ...product,
+    ...commercial,
+  }
+})
