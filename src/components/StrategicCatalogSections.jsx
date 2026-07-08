@@ -5,15 +5,10 @@ function StrategicSection({ section, activeModel, onOpen, onAddToCart }) {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-      <div className="mb-5 flex items-end justify-between gap-3">
-        <div>
-          <h3 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-            {section.title}
-          </h3>
-          <p className="mt-1 text-sm text-[#6e6e73] dark:text-[#86868b] max-w-2xl">
-            {section.description}
-          </p>
-        </div>
+      <div className="mb-4 flex items-baseline justify-between gap-3">
+        <h3 className="text-[19px] sm:text-[24px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
+          {section.title}
+        </h3>
         <span className="text-[13px] font-medium text-[#86868b] whitespace-nowrap">
           {section.products.length} {section.products.length === 1 ? 'producto' : 'productos'}
         </span>
@@ -49,18 +44,16 @@ export default function StrategicCatalogSections({
 
   return (
     <div>
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="flex items-baseline justify-between gap-3 mb-1">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+        <div className="flex items-center gap-4">
           <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
             Catalogo
           </h2>
+          <span className="h-px flex-1 bg-black/[0.08] dark:bg-white/[0.10]" />
           <span className="text-[13px] font-medium text-[#86868b] whitespace-nowrap">
             {totalProducts} {totalProducts === 1 ? 'producto' : 'productos'}
           </span>
         </div>
-        <p className="text-sm text-[#6e6e73] dark:text-[#86868b] max-w-2xl">
-          Ordenado por tipo de compra para que primero aparezca lo esencial y despues los complementos.
-        </p>
       </section>
 
       {sections.map((section) => (

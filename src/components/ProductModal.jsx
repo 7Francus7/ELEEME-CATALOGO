@@ -284,27 +284,37 @@ export default function ProductModal({
                   Elegí un modelo
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {product.modelos.map((model) => (
-                    <button
-                      key={model}
-                      type="button"
-                      onClick={() => {
-                        setSelectedModel(model)
-                        setCartFeedback('')
-                      }}
-                      className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                        model === currentModel
-                          ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]'
-                          : 'border-gray-200 dark:border-white/10 text-[#1d1d1f] dark:text-[#e5e5ea] hover:border-[#0071e3]'
-                      }`}
-                    >
-                      {model}
-                    </button>
-                  ))}
+                  {product.modelos.map((model) => {
+                    const modelOut = (modelStock(product, model) ?? 0) === 0
+                    return (
+                      <button
+                        key={model}
+                        type="button"
+                        onClick={() => {
+                          setSelectedModel(model)
+                          setCartFeedback('')
+                        }}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                          model === currentModel
+                            ? 'border-[#0071e3] bg-[#0071e3]/10 text-[#0071e3]'
+                            : modelOut
+                              ? 'border-gray-200 dark:border-white/10 text-[#86868b] opacity-70 hover:border-[#0071e3]'
+                              : 'border-gray-200 dark:border-white/10 text-[#1d1d1f] dark:text-[#e5e5ea] hover:border-[#0071e3]'
+                        }`}
+                      >
+                        {model}
+                        {modelOut && (
+                          <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-[#86868b]">
+                            Agotado
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
                 {!currentModel && (
                   <p className="mt-3 text-sm text-[#6e6e73] dark:text-[#86868b]">
-                    Seleccioná un modelo para ver el stock y agregar este producto al pedido.
+                    Seleccioná un modelo para ver la disponibilidad por color.
                   </p>
                 )}
               </div>
@@ -335,8 +345,12 @@ export default function ProductModal({
                         </span>
                       ))}
                     </div>
-                    <p className="text-sm text-[#6e6e73] dark:text-[#86868b] bg-[#f5f5f7] dark:bg-[#2c2c2e] rounded-xl px-4 py-3">
-                      Elegí un modelo arriba para ver el stock real por color.
+                    <p className="flex items-center gap-2 text-[13px] font-medium text-[#0071e3] dark:text-[#0a84ff] bg-[#0071e3]/[0.06] dark:bg-[#0a84ff]/10 rounded-xl px-4 py-3">
+                      <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+                        <circle cx="12" cy="12" r="9" />
+                        <path strokeLinecap="round" d="M12 11v5M12 8h.01" />
+                      </svg>
+                      Elegí un modelo arriba para ver la disponibilidad de cada color.
                     </p>
                   </div>
                 ) : (
@@ -344,28 +358,37 @@ export default function ProductModal({
                     {colors.map((color) => {
                       const quantity = colorStock(product, currentModel, color.nombre) ?? 0
                       const outOfStock = quantity === 0
+                      const lowStock = !outOfStock && quantity <= 2
 
                       return (
                         <div
                           key={color.nombre}
                           className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border ${
                             outOfStock
-                              ? 'border-transparent bg-[#f5f5f7] dark:bg-[#2c2c2e] opacity-60'
+                              ? 'border-transparent bg-[#f5f5f7] dark:bg-[#2c2c2e]'
                               : 'border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e]'
                           }`}
                         >
                           <span
-                            className="w-5 h-5 rounded-full border border-black/10 dark:border-white/20 flex-shrink-0"
+                            className={`w-5 h-5 rounded-full border border-black/10 dark:border-white/20 flex-shrink-0 ${outOfStock ? 'opacity-50' : ''}`}
                             style={{ backgroundColor: color.codigo }}
                           />
-                          <span className={`text-sm font-medium flex-1 ${outOfStock ? 'text-[#6e6e73] dark:text-[#86868b] line-through' : 'text-[#1d1d1f] dark:text-white'}`}>
+                          <span className={`text-sm font-medium flex-1 ${outOfStock ? 'text-[#86868b]' : 'text-[#1d1d1f] dark:text-white'}`}>
                             {color.nombre}
                           </span>
                           {outOfStock ? (
-                            <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wide">Agotado</span>
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/[0.05] dark:bg-white/[0.08] px-2.5 py-1 text-[11px] font-semibold text-[#86868b]">
+                              Agotado
+                            </span>
+                          ) : lowStock ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-100 dark:bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                              {quantity === 1 ? 'Última unidad' : `Quedan ${quantity}`}
+                            </span>
                           ) : (
-                            <span className="text-xs font-semibold text-green-600 dark:text-green-400">
-                              {quantity} {quantity === 1 ? 'disponible' : 'disponibles'}
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 dark:bg-green-500/15 px-2.5 py-1 text-[11px] font-semibold text-green-700 dark:text-green-400">
+                              <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                              En stock
                             </span>
                           )}
                         </div>

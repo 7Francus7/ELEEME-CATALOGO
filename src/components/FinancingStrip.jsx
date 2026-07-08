@@ -54,7 +54,7 @@ export default function FinancingStrip({ config, preview = false }) {
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 flex flex-col items-center">
-      <div className="animate-float inline-flex items-center gap-2.5 rounded-full border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#1c1c1e] shadow-sm pl-4 pr-2 py-1.5">
+      <div className="inline-flex items-center gap-2.5 rounded-full border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#1c1c1e] shadow-sm pl-4 pr-2 py-1.5">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#34c759] opacity-60" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-[#34c759]" />

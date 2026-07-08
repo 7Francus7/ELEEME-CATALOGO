@@ -75,23 +75,13 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
-/* Burbujita de financiación: flota suave y las tarjetas entran con slide */
-@keyframes floatY {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
-}
-
+/* Burbujita de financiación: pill fija, solo las tarjetas rotan con slide */
 @keyframes cardSwap {
   from { opacity: 0; transform: translateY(6px) scale(0.92); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.animate-float { animation: floatY 3.2s ease-in-out infinite; }
 .animate-card-swap { animation: cardSwap 0.35s cubic-bezier(0.22, 1, 0.36, 1) both; }
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-float { animation: none; }
-}
 
 .animate-fade-in  { animation: fadeIn  0.2s ease both; }
 .animate-slide-up { animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
