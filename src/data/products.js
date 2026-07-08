@@ -156,6 +156,13 @@ export const usesModels = (product) => Array.isArray(product.modelos) && product
 export const activeColors = (product) =>
   (product.colores || []).filter((c) => c.activo !== false)
 
+// Modo "todo en stock": el catálogo muestra todo disponible para todos los
+// modelos y colores. El stock cargado en el admin queda como registro interno
+// pero no limita nada de cara al cliente. Poner en false para volver al
+// manejo real de stock (agotados, avisos de restock, límites en el carrito).
+export const ALWAYS_IN_STOCK = true
+const UNLIMITED_STOCK = 99
+
 // Clave de stock a usar para el modelo seleccionado.
 // - Productos con modelos: la clave es el modelo (null si no hay modelo elegido)
 // - Productos sin modelos: siempre DEFAULT_STOCK_KEY
@@ -170,6 +177,7 @@ const stockKeyFor = (product, model) => {
 export const colorStock = (product, model, colorName) => {
   const key = stockKeyFor(product, model)
   if (!key) return null
+  if (ALWAYS_IN_STOCK) return UNLIMITED_STOCK
   return product.stock?.[key]?.[colorName] ?? 0
 }
 
@@ -178,6 +186,7 @@ export const colorStock = (product, model, colorName) => {
 export const modelStock = (product, model) => {
   const key = stockKeyFor(product, model)
   if (!key) return null
+  if (ALWAYS_IN_STOCK) return UNLIMITED_STOCK
   const byColor = product.stock?.[key]
   if (!byColor) return 0
   return activeColors(product).reduce((sum, c) => sum + (Number(byColor[c.nombre]) || 0), 0)
@@ -191,6 +200,7 @@ export const hasStock = (product, model) => {
 
 // Stock total del producto considerando todos sus modelos o su stock unico.
 export const productTotalStock = (product) => {
+  if (ALWAYS_IN_STOCK) return UNLIMITED_STOCK
   if (!product?.stock) return 0
 
   if (!usesModels(product)) {
