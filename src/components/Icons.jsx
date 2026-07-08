@@ -129,3 +129,83 @@ export const OtherRepairIcon = ({ className }) => (
     <path strokeLinecap="round" d="M11.75 16.75h.01" />
   </svg>
 )
+
+// ── Iconos de categorías (tiles estilo billetera) ────────────────────────────
+
+export const CaseIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="6" y="2.5" width="12" height="19" rx="3.5" />
+    <rect x="8.5" y="5" width="4.5" height="4.5" rx="1.5" />
+  </svg>
+)
+
+export const ChargerIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="6" y="7" width="12" height="9" rx="3" />
+    <path strokeLinecap="round" d="M9.5 7V3.5M14.5 7V3.5M12 16v5" />
+  </svg>
+)
+
+export const CableIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 3.5v4M8 7.5a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h8a3 3 0 0 1 3 3v2" />
+    <path strokeLinecap="round" d="M6 3.5h4" />
+  </svg>
+)
+
+export const TemperedGlassIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+    <path strokeLinecap="round" d="m9.5 13 4.5-4.5M10.5 16.5 15 12" />
+  </svg>
+)
+
+export const WatchIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="7" y="7" width="10" height="10" rx="3" />
+    <path strokeLinecap="round" d="M9 7V3.5h6V7M9 17v3.5h6V17" />
+  </svg>
+)
+
+export const EarbudsIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.5 5.5a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3 3 3 0 0 1-3-3v-1a3 3 0 0 1 3-3ZM8.5 12.5v6M15.5 5.5a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3 3 3 0 0 1-3-3v-1a3 3 0 0 1 3-3ZM15.5 12.5v6" />
+  </svg>
+)
+
+export const SpeakerIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="6" y="3.5" width="12" height="17" rx="3" />
+    <circle cx="12" cy="14" r="3" />
+    <circle cx="12" cy="7.5" r="1" />
+  </svg>
+)
+
+export const SparklesIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5 13.6 9l4.4 1.5-4.4 1.5L12 16.5 10.4 12 6 10.5 10.4 9 12 4.5ZM18.5 15.5l.75 2.25L21.5 18.5l-2.25.75-.75 2.25-.75-2.25-2.25-.75 2.25-.75.75-2.25Z" />
+  </svg>
+)
+
+export const BatteryPackIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="5" y="4" width="14" height="16" rx="3" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 8.5-2.5 4h3.5l-2.5 4" />
+  </svg>
+)
+
+export const PhoneBoltIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="m12.75 8-2.25 4h3l-2.25 4" />
+  </svg>
+)
+
+export const GridIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+    <rect x="4" y="4" width="7" height="7" rx="2" />
+    <rect x="13" y="4" width="7" height="7" rx="2" />
+    <rect x="4" y="13" width="7" height="7" rx="2" />
+    <rect x="13" y="13" width="7" height="7" rx="2" />
+  </svg>
+)

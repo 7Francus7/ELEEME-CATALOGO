@@ -131,7 +131,7 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-2 pt-4 border-t border-gray-50 dark:border-white/5">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-2 pt-4 border-t border-gray-50 dark:border-white/5">
           <div className="flex flex-col min-w-0">
             <span className="font-bold text-[#1d1d1f] dark:text-white text-base sm:text-lg tracking-tight">
               {formatPrice(product.precio)}
@@ -155,7 +155,7 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
             onClick={handleAdd}
             disabled={canAddDirectly && !inStock}
             aria-label={`${addLabel} ${product.nombre}`}
-            className={`flex-shrink-0 text-xs font-semibold px-3.5 py-2 rounded-full transition-all duration-200 ${
+            className={`w-full sm:w-auto flex-shrink-0 text-xs font-semibold px-3.5 py-2 rounded-full transition-all duration-200 ${
               canAddDirectly && !inStock
                 ? 'bg-[#d2d2d7] dark:bg-white/10 text-white cursor-not-allowed'
                 : 'bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white shadow-sm shadow-blue-500/20'

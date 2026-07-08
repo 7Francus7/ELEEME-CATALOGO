@@ -106,7 +106,7 @@ export default function BannerManager({ config, onSave, onReset, onClose, onSave
 
                 <div>
                   <label className="admin-label">Titulo principal</label>
-                  <input className="admin-input" value={draft.title} onChange={update('title')} placeholder="Ej: Hasta 6 cuotas sin interes con tarjetas seleccionadas." />
+                  <input className="admin-input" value={draft.title} onChange={update('title')} placeholder="Ej: 3 cuotas sin interes" />
                 </div>
 
                 <div>

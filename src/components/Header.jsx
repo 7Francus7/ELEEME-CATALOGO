@@ -201,7 +201,8 @@ export default function Header({
           </div>
         </div>
 
-        {!searchOpen && (
+        {/* En home los tiles del medio reemplazan a los chips: arriba queda solo ELEEME */}
+        {!searchOpen && !isHome && (
           <ScrollableChipsRow
             ariaLabel="Categorías"
             rowClassName="flex w-max min-w-full gap-2 px-1"

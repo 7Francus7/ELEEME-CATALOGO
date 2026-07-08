@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { DEFAULT_COMMERCIAL_BANNER } from '../data/catalogConfig'
 
-const STORAGE_KEY = 'eleeme_commercial_banner_v1'
+// v2: pasa a "3 cuotas sin interes" con Visa/Mastercard/Naranja X; invalida configs viejas de 6 cuotas.
+const STORAGE_KEY = 'eleeme_commercial_banner_v2'
 
 function cleanList(list, fallback) {
   const seen = new Set()

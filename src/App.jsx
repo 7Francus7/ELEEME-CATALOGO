@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   MODEL_CATEGORIES,
   availableModelsFor,
@@ -9,10 +9,9 @@ import { useCategories } from './hooks/useCategories'
 import { useCommercialBanner } from './hooks/useCommercialBanner'
 import { useCart } from './hooks/useCart'
 import Header from './components/Header'
+import CategoryTiles from './components/CategoryTiles'
 import CatalogHero from './components/CatalogHero'
 import FinancingStrip from './components/FinancingStrip'
-import CuratedSections from './components/CuratedSections'
-import PacksSection from './components/PacksSection'
 import StrategicCatalogSections from './components/StrategicCatalogSections'
 import ProductGrid from './components/ProductGrid'
 import ProductModal from './components/ProductModal'
@@ -22,13 +21,11 @@ import AdminPanel from './components/AdminPanel'
 import Footer from './components/Footer'
 import {
   getCatalogNavigationCategories,
-  getCuratedCollections,
   getRelatedProducts,
   getStrategicCatalogSections,
   isProductVisible,
   sortProductsForCatalog,
 } from './utils/catalogSelectors'
-import { visiblePacks } from './utils/packSelectors'
 
 const DARK_KEY = 'eleeme_dark_mode'
 
@@ -52,10 +49,8 @@ export default function App() {
     decrementItem,
     removeItem,
     clearCart,
-    addPack,
   } = useCart(products, packs)
 
-  const catalogRef = useRef(null)
   const catalogCategories = useMemo(
     () => getCatalogNavigationCategories(categories, products),
     [categories, products]
@@ -86,8 +81,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const scrollToCatalog = () => {
-    catalogRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  const handleTileSelect = (category) => {
+    handleCategoryChange(category)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleNotifyRestock = (productId, email) => {
@@ -166,20 +162,12 @@ export default function App() {
 
   const showHero = !searchQuery && selectedCategory === 'Todos'
   const activeModel = modelFilterActive && selectedModel !== 'Todos' ? selectedModel : null
-  const curatedCollections = useMemo(
-    () => getCuratedCollections(products),
-    [products]
-  )
   const strategicSections = useMemo(
     () => getStrategicCatalogSections(products, categories),
     [categories, products]
   )
   const visibleProductCount = useMemo(
     () => products.filter(isProductVisible).length,
-    [products]
-  )
-  const sortedPacks = useMemo(
-    () => visiblePacks(packs, products),
     [products]
   )
   const activeProduct =
@@ -209,36 +197,23 @@ export default function App() {
 
       <main className={cartCount > 0 ? 'pb-24 sm:pb-28' : ''}>
         {showHero && (
-          <CatalogHero onBrowseCatalog={scrollToCatalog} />
+          <CategoryTiles
+            categories={catalogCategories}
+            onSelectCategory={handleTileSelect}
+          />
         )}
 
         {showHero && <FinancingStrip config={bannerConfig} />}
 
-        {showHero && (
-          <CuratedSections
-            collections={curatedCollections}
-            activeModel={activeModel}
-            onOpenProduct={setSelectedProduct}
-            onAddToCart={handleAddToCart}
-          />
-        )}
-
-        {showHero && (
-          <PacksSection
-            packs={sortedPacks}
-            products={products}
-            onAddPack={addPack}
-          />
-        )}
+        {showHero && <CatalogHero />}
 
         <div
-          ref={catalogRef}
           className={
             showHero
-              ? 'scroll-mt-28 sm:scroll-mt-32 pt-8 sm:pt-10'
+              ? 'pt-8 sm:pt-10'
               : modelsForCategory.length > 0
-                ? 'scroll-mt-40 sm:scroll-mt-44 pt-40 sm:pt-44'
-              : 'scroll-mt-28 sm:scroll-mt-32 pt-28 sm:pt-32'
+                ? 'pt-40 sm:pt-44'
+                : 'pt-28 sm:pt-32'
           }
         >
           {showHero ? (
