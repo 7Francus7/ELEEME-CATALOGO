@@ -5,6 +5,7 @@
 // Límite de Vercel: ~4.5 MB por request → ideal para fotos. Los videos pesados
 // no entran por acá (el cliente cae a guardado local / link).
 import { neon } from '@neondatabase/serverless'
+import { timingSafeEqual } from 'node:crypto'
 
 export const config = { api: { bodyParser: false } }
 
@@ -16,9 +17,15 @@ const CONN =
 
 const MAX_BYTES = 4 * 1024 * 1024 // 4 MB de margen bajo el límite de Vercel
 
-function getToken(req) {
+// Comparación en tiempo constante para no filtrar la clave por timing.
+function tokenOk(req) {
+  const expected = process.env.ADMIN_TOKEN || ''
+  if (!expected) return false
   const header = req.headers.authorization || req.headers.Authorization || ''
-  return header.replace(/^Bearer\s+/i, '').trim()
+  const provided = header.replace(/^Bearer\s+/i, '').trim()
+  const a = Buffer.from(provided)
+  const b = Buffer.from(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
 }
 
 function readBody(req, limit) {
@@ -54,7 +61,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' })
   }
   if (!CONN) return res.status(503).json({ error: 'Base de datos no configurada' })
-  if (!process.env.ADMIN_TOKEN || getToken(req) !== process.env.ADMIN_TOKEN) {
+  if (!tokenOk(req)) {
     return res.status(401).json({ error: 'No autorizado' })
   }
 
@@ -83,6 +90,7 @@ export default async function handler(req, res) {
     `
     return res.status(200).json({ url: `/api/media?id=${encodeURIComponent(id)}` })
   } catch (e) {
-    return res.status(500).json({ error: String(e?.message || e) })
+    console.error('upload error:', e)
+    return res.status(500).json({ error: 'Error al subir el archivo' })
   }
 }

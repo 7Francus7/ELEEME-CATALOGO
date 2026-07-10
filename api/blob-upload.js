@@ -5,6 +5,16 @@
 // El navegador llama a /api/blob-upload (vía la librería @vercel/blob/client),
 // acá validamos el ADMIN_TOKEN y, si está bien, se emite el permiso de subida.
 import { handleUpload } from '@vercel/blob/client'
+import { timingSafeEqual } from 'node:crypto'
+
+// Comparación en tiempo constante para no filtrar la clave por timing.
+function payloadOk(clientPayload) {
+  const expected = process.env.ADMIN_TOKEN || ''
+  if (!expected) return false
+  const a = Buffer.from(String(clientPayload || ''))
+  const b = Buffer.from(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -21,7 +31,7 @@ export default async function handler(req, res) {
       request: req,
       // Se ejecuta antes de emitir el permiso: acá controlamos quién puede subir.
       onBeforeGenerateToken: async (_pathname, clientPayload) => {
-        if (!process.env.ADMIN_TOKEN || clientPayload !== process.env.ADMIN_TOKEN) {
+        if (!payloadOk(clientPayload)) {
           throw new Error('No autorizado')
         }
         return {

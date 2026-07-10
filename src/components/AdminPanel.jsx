@@ -10,8 +10,12 @@ import { XIcon, ChevronLeftIcon } from './Icons'
 import CatalogImage from './CatalogImage'
 import BannerManager from './BannerManager'
 
-// ─── CONTRASEÑA DEL PANEL ADMIN ───────────────────────────────────────────────
-const ADMIN_PASSWORD = 'eleeme2024'
+// ─── ACCESO AL PANEL ADMIN ────────────────────────────────────────────────────
+// La clave NO vive en el código (todo lo que va al navegador es público): se
+// valida contra el servidor (variable ADMIN_TOKEN en Vercel) vía
+// GET /api/catalog?verify=1. Si el backend no está configurado (dev local),
+// el panel abre en modo local: las ediciones solo afectan a ese navegador y
+// publicar igual exige la clave real.
 
 const EMPTY_FORM = {
   nombre: '',
@@ -219,11 +223,13 @@ export default function AdminPanel({
   onResetBannerConfig,
   onClose,
 }) {
-  const [authenticated, setAuthenticated] = useState(false)
+  // Un dispositivo que ya guardó la clave queda como confiable (es del dueño).
+  const [authenticated, setAuthenticated] = useState(hasAdminToken())
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false)
   const [bannerManagerOpen, setBannerManagerOpen] = useState(false)
   const [pwInput, setPwInput] = useState('')
   const [pwError, setPwError] = useState(false)
+  const [pwChecking, setPwChecking] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [editingId, setEditingId] = useState(null)
   const [imageProcessing, setImageProcessing] = useState(false)
@@ -247,14 +253,35 @@ export default function AdminPanel({
 
   const f = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }))
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    if (pwInput === ADMIN_PASSWORD) {
+    const clave = pwInput.trim()
+    if (!clave || pwChecking) return
+    setPwChecking(true)
+    try {
+      const r = await fetch('/api/catalog?verify=1', {
+        headers: { Authorization: `Bearer ${clave}` },
+        cache: 'no-store',
+      })
+      if (r.ok) {
+        // Clave correcta: queda guardada y la nube conectada de una.
+        setAdminToken(clave)
+        setTokenInput(clave)
+        setConnected(true)
+        setAuthenticated(true)
+      } else if (r.status === 401) {
+        setPwError(true)
+        setPwInput('')
+        setTimeout(() => setPwError(false), 1500)
+      } else {
+        // Backend sin configurar: modo local (no hay nada remoto que proteger).
+        setAuthenticated(true)
+      }
+    } catch {
+      // Sin conexión / dev local: modo local, publicar igual exige clave real.
       setAuthenticated(true)
-    } else {
-      setPwError(true)
-      setPwInput('')
-      setTimeout(() => setPwError(false), 1500)
+    } finally {
+      setPwChecking(false)
     }
   }
 
@@ -638,20 +665,20 @@ export default function AdminPanel({
           <div className="text-center mb-8">
             <span className="text-4xl">🔐</span>
             <h2 className="text-xl font-bold mt-4 dark:text-white">Panel Admin</h2>
-            <p className="text-sm text-[#86868b] mt-1">Ingresá para gestionar ELEEME</p>
+            <p className="text-sm text-[#86868b] mt-1">Ingresá tu clave de publicación (la que configuraste en Vercel)</p>
           </div>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="password"
-              placeholder="Contraseña"
+              placeholder="Clave de publicación"
               value={pwInput}
               onChange={(e) => setPwInput(e.target.value)}
               className="w-full bg-[#f5f5f7] dark:bg-[#2c2c2e] dark:text-white rounded-xl px-4 py-4 text-sm outline-none focus:ring-2 focus:ring-[#0071e3]"
               autoFocus
             />
-            {pwError && <p className="text-red-500 text-xs text-center">Contraseña incorrecta</p>}
-            <button type="submit" className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl text-sm active:scale-95 transition-all">
-              Entrar
+            {pwError && <p className="text-red-500 text-xs text-center">Clave incorrecta</p>}
+            <button type="submit" disabled={pwChecking} className="w-full bg-black dark:bg-white dark:text-black text-white font-bold py-4 rounded-xl text-sm active:scale-95 transition-all disabled:opacity-50">
+              {pwChecking ? 'Verificando…' : 'Entrar'}
             </button>
             <button type="button" onClick={onClose} className="w-full text-sm text-[#86868b] mt-2">Volver al sitio</button>
           </form>

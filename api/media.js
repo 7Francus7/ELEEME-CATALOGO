@@ -28,10 +28,13 @@ export default async function handler(req, res) {
 
     const buf = Buffer.from(rows[0].b64, 'base64')
     res.setHeader('Content-Type', rows[0].content_type || 'application/octet-stream')
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+    res.setHeader('Content-Disposition', 'inline')
     res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable')
     res.setHeader('Content-Length', String(buf.length))
     return res.status(200).send(buf)
   } catch (e) {
-    return res.status(500).json({ error: String(e?.message || e) })
+    console.error('media read error:', e)
+    return res.status(500).json({ error: 'Error al leer el archivo' })
   }
 }
