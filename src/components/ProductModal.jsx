@@ -94,6 +94,7 @@ export default function ProductModal({
   const [colorsOpen, setColorsOpen] = useState(false)
   const panelRef = useRef(null)
   const modelsTriggerRef = useRef(null)
+  const galleryRef = useRef(null)
 
   // El modal siempre está abierto en la URL del producto (/producto/<handle>),
   // así que alcanza con leerla; se sacan los query params para compartir limpio.
@@ -164,12 +165,44 @@ export default function ProductModal({
         ? 'Agregar al pedido'
         : 'Sin stock'
 
+  // Usado por el lightbox (ahí no hay carrusel, se cambia la foto directo).
   const goImage = (direction) => {
     setActiveImage((index) => {
       if (!images.length) return 0
       return (index + direction + images.length) % images.length
     })
   }
+
+  // En el carrusel manda el scroll: flechas y miniaturas desplazan el
+  // contenedor, y es el scroll el que actualiza cuál es la foto activa. Así
+  // deslizar con el dedo y usar los controles no se pelean entre sí.
+  const scrollToImage = (index, behavior = 'smooth') => {
+    const gallery = galleryRef.current
+    if (!gallery || !gallery.clientWidth) return
+    gallery.scrollTo({ left: index * gallery.clientWidth, behavior })
+  }
+
+  const stepGallery = (direction) => {
+    if (!images.length) return
+    scrollToImage((safeActive + direction + images.length) % images.length)
+  }
+
+  const handleGalleryScroll = (event) => {
+    const gallery = event.currentTarget
+    if (!gallery.clientWidth) return
+    const index = Math.round(gallery.scrollLeft / gallery.clientWidth)
+    setActiveImage((current) => (current === index ? current : index))
+  }
+
+  // Al cambiar de producto el carrusel vuelve a la primera foto, y al cerrar el
+  // lightbox se alinea con la que quedó elegida ahí adentro.
+  useEffect(() => {
+    scrollToImage(0, 'auto')
+  }, [product.id])
+
+  useEffect(() => {
+    if (!lightboxOpen) scrollToImage(safeActive, 'auto')
+  }, [lightboxOpen])
 
   useEffect(() => {
     const handleKey = (event) => {
@@ -255,7 +288,7 @@ export default function ProductModal({
         aria-modal="true"
         aria-labelledby="product-modal-title"
         tabIndex={-1}
-        className="relative w-full sm:max-w-3xl max-h-[92dvh] sm:max-h-[88vh] bg-white dark:bg-[#1c1c1e] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col animate-slide-up focus:outline-none"
+        className="relative w-full sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl max-h-[92dvh] sm:max-h-[88vh] bg-white dark:bg-[#1c1c1e] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col animate-slide-up focus:outline-none"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between px-3 sm:px-4 h-12 flex-shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e]">
@@ -305,29 +338,47 @@ export default function ProductModal({
         </div>
 
         <div className="flex flex-col sm:flex-row overflow-y-auto overscroll-contain sm:overflow-hidden flex-1">
-          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 sm:overflow-y-auto sm:overscroll-contain">
+          {/* Sin scroll propio y estirada a todo el alto: la foto queda quieta al
+              lado de la información en vez de irse al scrollear, y el fondo gris
+              llena la columna en lugar de cortarse debajo de las miniaturas. */}
+          <div className="sm:w-1/2 lg:w-[55%] bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 sm:flex sm:flex-col sm:justify-center">
             <div className="relative group">
-              <CatalogImage
-                src={images[safeActive]}
-                alt={product.nombre}
-                fallbackText={product.nombre}
-                onClick={() => setLightboxOpen(true)}
-                className={`w-full h-64 sm:h-80 cursor-zoom-in ${fitContain ? 'object-contain p-8' : 'object-cover'}`}
-              />
+              {/* Carrusel deslizable: en mobile se pasan las fotos con el dedo
+                  (scroll-snap) en vez de apuntarle a una flechita chica; en
+                  desktop las flechas mueven el mismo contenedor. */}
+              <div
+                ref={galleryRef}
+                onScroll={handleGalleryScroll}
+                className="flex w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scrollbar-hide"
+              >
+                {(images.length ? images : [undefined]).map((src, index) => (
+                  <CatalogImage
+                    key={index}
+                    src={src}
+                    alt={images.length > 1 ? `${product.nombre} — foto ${index + 1}` : product.nombre}
+                    fallbackText={product.nombre}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    onClick={() => setLightboxOpen(true)}
+                    className={`w-full flex-shrink-0 snap-center h-72 sm:h-[420px] lg:h-[500px] cursor-zoom-in ${
+                      fitContain ? 'object-contain p-8' : 'object-cover'
+                    }`}
+                  />
+                ))}
+              </div>
 
               {images.length > 1 && (
                 <>
                   <button
-                    onClick={() => goImage(-1)}
+                    onClick={() => stepGallery(-1)}
                     aria-label="Foto anterior"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 hidden sm:flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors"
                   >
                     <ChevronLeftIcon className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => goImage(1)}
+                    onClick={() => stepGallery(1)}
                     aria-label="Foto siguiente"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors rotate-180"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 hidden sm:flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors rotate-180"
                   >
                     <ChevronLeftIcon className="w-5 h-5" />
                   </button>
@@ -350,7 +401,7 @@ export default function ProductModal({
                 {images.map((src, index) => (
                   <button
                     key={index}
-                    onClick={() => setActiveImage(index)}
+                    onClick={() => scrollToImage(index)}
                     aria-label={`Ver foto ${index + 1}`}
                     aria-current={index === safeActive}
                     className={`flex-shrink-0 snap-start w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
@@ -366,7 +417,7 @@ export default function ProductModal({
             )}
           </div>
 
-          <div className="sm:w-3/5 min-w-0 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto overscroll-contain">
+          <div className="sm:w-1/2 lg:w-[45%] min-w-0 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto overscroll-contain">
             {product.tag && (
               <span className="text-xs font-semibold uppercase tracking-wider text-[#0071e3]">
                 {product.tag}
