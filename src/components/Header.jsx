@@ -125,7 +125,11 @@ export default function Header({
           )}
 
           {!searchOpen && (
-            <button onClick={onGoHome} className="flex-shrink-0 select-none" aria-label="Inicio">
+            <button
+              onClick={onGoHome}
+              className="flex-shrink-0 inline-flex items-center min-h-[44px] pr-1 select-none"
+              aria-label="Inicio"
+            >
               <span
                 className="text-[#1d1d1f] dark:text-white"
                 style={{ fontWeight: 900, fontSize: '17px', letterSpacing: '-0.04em' }}
@@ -143,6 +147,8 @@ export default function Header({
                   <input
                     autoFocus
                     type="text"
+                    inputMode="search"
+                    aria-label="Buscar productos"
                     placeholder="Buscar productos..."
                     value={searchQuery}
                     onChange={(e) => onSearchChange(e.target.value)}
@@ -150,6 +156,7 @@ export default function Header({
                   />
                   <button
                     onClick={handleCloseSearch}
+                    aria-label="Cerrar búsqueda"
                     className="flex-shrink-0 text-[#86868b] transition-colors hover:text-[#1d1d1f] dark:hover:text-white"
                   >
                     <XIcon className="w-4 h-4" />

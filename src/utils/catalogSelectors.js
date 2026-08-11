@@ -41,25 +41,25 @@ const STRATEGIC_SECTION_DEFINITIONS = [
   {
     key: 'fundas',
     title: 'Fundas',
-    description: 'Primero lo mas pedido: fundas listas para elegir por modelo.',
+    description: 'Primero lo más pedido: fundas listas para elegir por modelo.',
     categories: ['Fundas'],
   },
   {
     key: 'proteccion',
-    title: 'Proteccion de camara',
-    description: 'Protectores y vidrios para resolver cuidado extra en misma pasada.',
+    title: 'Protección de cámara',
+    description: 'Protectores y vidrios para resolver el cuidado extra en la misma pasada.',
     categories: ['Protectores de cámara', 'Vidrio templado'],
   },
   {
     key: 'carga',
     title: 'Carga',
-    description: 'Cargadores y cables juntos para cerrar compra completa sin buscar aparte.',
+    description: 'Cargadores y cables juntos para cerrar la compra completa sin buscar aparte.',
     categories: ['Cargadores', 'Cables', 'Battery pack', 'Funda cargador'],
   },
   {
     key: 'accesorios',
     title: 'Accesorios',
-    description: 'Soportes, correas y extras rapidos para complementar pedido.',
+    description: 'Soportes, correas y extras rápidos para complementar el pedido.',
     categories: ['Correas', 'Reloj', 'Personaliza tu funda', 'Funda auriculares'],
   },
   {
@@ -199,7 +199,7 @@ export function getStrategicCatalogSections(products, configuredCategories = [])
     sections.push({
       key: `category-${category}`,
       title: category,
-      description: 'Productos agrupados por categoria para mantener catalogo claro.',
+      description: 'Productos agrupados por categoría para mantener el catálogo claro.',
       categories: [category],
       products: categoryProducts,
     })
@@ -253,19 +253,19 @@ export function getCollectionDefinition(key) {
   if (key === 'promos') {
     return {
       title: 'Promos',
-      description: 'Productos con precio promocional cargado en el catalogo.',
+      description: 'Productos con precio promocional cargado en el catálogo.',
     }
   }
 
   if (key === 'bestSellers') {
     return {
-      title: 'Mas vendidos',
-      description: 'Productos destacados para resolver compras rapidas.',
+      title: 'Más vendidos',
+      description: 'Productos destacados para resolver compras rápidas.',
     }
   }
 
   return {
     title: 'Novedades',
-    description: 'Ultimos productos visibles, priorizando los que tienen stock.',
+    description: 'Últimos productos visibles, priorizando los que tienen stock.',
   }
 }

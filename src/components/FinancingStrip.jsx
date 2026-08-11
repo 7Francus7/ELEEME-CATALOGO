@@ -60,7 +60,7 @@ export default function FinancingStrip({ config, preview = false }) {
           <span className="relative inline-flex h-2 w-2 rounded-full bg-[#34c759]" />
         </span>
         <span className="text-[13px] sm:text-sm font-semibold tracking-tight text-[#1d1d1f] dark:text-white whitespace-nowrap">
-          {activeConfig.title || '3 cuotas sin interes'}
+          {activeConfig.title || '3 cuotas sin interés'}
         </span>
         <span
           key={currentCard}

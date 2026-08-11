@@ -23,6 +23,14 @@
   button, a, [role='button'] {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Foco visible y consistente para quien navega con teclado.
+     :focus-visible no se dispara al hacer click con el mouse, así que el
+     diseño con mouse queda exactamente igual que antes. */
+  :focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 @layer components {
@@ -101,3 +109,20 @@
 .stagger-10 { animation-delay: 300ms; }
 .stagger-11 { animation-delay: 330ms; }
 .stagger-12 { animation-delay: 360ms; }
+
+/* ── Respeta "reducir movimiento" del sistema ─────────────────────────────────
+   Quien activa esta opción (mareos, vértigo, sensibilidad al movimiento) sigue
+   viendo el catálogo igual, pero sin desplazamientos ni parpadeos. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

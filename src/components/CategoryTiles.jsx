@@ -42,7 +42,9 @@ export default function CategoryTiles({ categories, onSelectCategory }) {
   if (!categories?.length) return null
 
   return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 animate-fade-in">
+    // El espacio superior que despeja el header fijo lo aporta CatalogIntro,
+    // que ahora va arriba de esta fila.
+    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-7 sm:pt-9 animate-fade-in">
       {/* flex-wrap centrado: la última fila queda centrada en vez de dejar huecos */}
       <div className="mx-auto flex max-w-4xl flex-wrap justify-center gap-2 sm:gap-2.5">
         {categories.map((category) => {
@@ -52,7 +54,10 @@ export default function CategoryTiles({ categories, onSelectCategory }) {
               key={category}
               type="button"
               onClick={() => onSelectCategory(category)}
-              className="group flex w-[calc(33.333%-0.375rem)] sm:w-[122px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.06] px-1.5 py-3 sm:py-3.5 transition-all duration-200 hover:border-[#0071e3]/40 hover:shadow-sm active:scale-[0.96]"
+              // min-h fija: sin esto los tiles cuya etiqueta ocupa dos líneas
+              // ("Protectores de cámara") quedan más altos que sus vecinos y la
+              // grilla se ve despareja.
+              className="group flex w-[calc(33.333%-0.375rem)] sm:w-[122px] min-h-[92px] sm:min-h-[96px] flex-col items-center justify-center gap-1.5 rounded-2xl bg-white dark:bg-[#1c1c1e] border border-black/[0.06] dark:border-white/[0.06] px-1.5 py-3 sm:py-3.5 transition-all duration-200 hover:border-[#0071e3]/40 hover:shadow-sm active:scale-[0.96]"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#eef4fe] dark:bg-[#0a84ff]/15 text-[#0071e3] dark:text-[#0a84ff] transition-transform duration-200 group-hover:scale-105">
                 <Icon className="h-5 w-5" />

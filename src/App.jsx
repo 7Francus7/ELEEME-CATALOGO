@@ -9,6 +9,7 @@ import { useCategories } from './hooks/useCategories'
 import { useCommercialBanner } from './hooks/useCommercialBanner'
 import { useCart } from './hooks/useCart'
 import Header from './components/Header'
+import CatalogIntro from './components/CatalogIntro'
 import CategoryTiles from './components/CategoryTiles'
 import CatalogHero from './components/CatalogHero'
 import FinancingStrip from './components/FinancingStrip'
@@ -196,6 +197,8 @@ export default function App() {
       />
 
       <main className={cartCount > 0 ? 'pb-24 sm:pb-28' : ''}>
+        {showHero && <CatalogIntro />}
+
         {showHero && (
           <CategoryTiles
             categories={catalogCategories}

@@ -14,10 +14,10 @@ export default function ProductGrid({
     const hasFilter = searchQuery || (selectedCategory && selectedCategory !== 'Todos')
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center animate-fade-in">
-        <p className="text-5xl mb-4">🔍</p>
-        <p className="text-[#1d1d1f] dark:text-white font-semibold text-lg mb-2">
+        <p className="text-5xl mb-4" aria-hidden="true">🔍</p>
+        <h1 className="text-[#1d1d1f] dark:text-white font-semibold text-lg mb-2">
           Sin resultados
-        </p>
+        </h1>
         <p className="text-sm text-[#6e6e73] dark:text-[#86868b] mb-6 max-w-xs mx-auto">
           {searchQuery
             ? <>No encontramos productos para <strong>"{searchQuery}"</strong>.</>
@@ -26,7 +26,7 @@ export default function ProductGrid({
         {hasFilter && (
           <button
             onClick={onClearSearch}
-            className="inline-flex items-center gap-2 bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-sm font-medium px-5 py-2.5 rounded-full transition-all duration-200"
+            className="inline-flex items-center justify-center gap-2 min-h-[44px] bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-sm font-medium px-5 py-2.5 rounded-full transition-all duration-200"
           >
             Ver todos los productos
           </button>
@@ -39,9 +39,15 @@ export default function ProductGrid({
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       <div className="flex items-baseline justify-between gap-3 mb-5 sm:mb-6">
         {showTitle ? (
-          <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-            Catálogo
-          </h2>
+          // El título dice dónde estás parado (categoría o búsqueda) en vez de
+          // repetir "Catálogo" en todas las vistas, y es el <h1> de esta pantalla.
+          <h1 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white min-w-0">
+            {searchQuery
+              ? <span className="break-words">Resultados para “{searchQuery}”</span>
+              : selectedCategory && selectedCategory !== 'Todos'
+                ? selectedCategory
+                : 'Catálogo'}
+          </h1>
         ) : <span />}
         <span className="text-[13px] font-medium text-[#86868b] whitespace-nowrap">
           {products.length} {products.length === 1 ? 'producto' : 'productos'}

@@ -75,8 +75,8 @@ function PaymentLogo({ name }) {
 export default function CommercialBanner({ config, onDismiss, preview = false }) {
   if (!config?.enabled && !preview) return null
 
-  const badge = config?.badge || 'Cuotas sin interes'
-  const title = config?.title || 'Hasta 6 cuotas sin interes'
+  const badge = config?.badge || 'Cuotas sin interés'
+  const title = config?.title || 'Hasta 6 cuotas sin interés'
   const description = config?.description || ''
   const note = config?.note || ''
   const cards = config?.cards || []

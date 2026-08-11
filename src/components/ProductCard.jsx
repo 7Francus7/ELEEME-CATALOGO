@@ -103,8 +103,20 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
             )}
           </div>
 
-          <h3 className="font-semibold text-[#1d1d1f] dark:text-white text-[15px] sm:text-[17px] leading-[1.3] tracking-tight mb-2 group-hover:text-[#0071e3] transition-colors duration-300">
-            {product.nombre}
+          {/* El título es el control accesible de la card: con mouse se puede
+              clickear toda la card, pero quien navega con teclado necesita un
+              botón real al que llegar con Tab para abrir el producto. */}
+          <h3 className="mb-2">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation()
+                onOpen(product)
+              }}
+              className="text-left font-semibold text-[#1d1d1f] dark:text-white text-[15px] sm:text-[17px] leading-[1.3] tracking-tight group-hover:text-[#0071e3] transition-colors duration-300"
+            >
+              {product.nombre}
+            </button>
           </h3>
 
           <p className="text-xs text-[#86868b] dark:text-[#86868b] mb-4 line-clamp-2 leading-relaxed">
@@ -155,9 +167,11 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
             onClick={handleAdd}
             disabled={canAddDirectly && !inStock}
             aria-label={`${addLabel} ${product.nombre}`}
-            className={`w-full sm:w-auto flex-shrink-0 text-xs font-semibold px-3.5 py-2 rounded-full transition-all duration-200 ${
+            // px chico en mobile: la card mide ~126px y "Elegir modelo" necesita
+            // 101px, así que con padding grande el texto caía en dos líneas.
+            className={`w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center whitespace-nowrap min-h-[44px] text-[13px] font-semibold px-2 sm:px-4 py-2 rounded-full transition-all duration-200 ${
               canAddDirectly && !inStock
-                ? 'bg-[#d2d2d7] dark:bg-white/10 text-white cursor-not-allowed'
+                ? 'bg-[#e8e8ed] dark:bg-white/10 text-[#6e6e73] dark:text-white/60 cursor-not-allowed'
                 : 'bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white shadow-sm shadow-blue-500/20'
             }`}
           >

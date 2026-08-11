@@ -67,16 +67,16 @@ export const availableModelsFor = (productList) => {
 
 export const DEFAULT_COMMERCIAL_BANNER = {
   enabled: true,
-  badge: 'Cuotas sin interes',
-  title: '3 cuotas sin interes',
-  description: 'Paga con tus tarjetas favoritas y coordina tu compra por WhatsApp en minutos.',
+  badge: 'Cuotas sin interés',
+  title: '3 cuotas sin interés',
+  description: 'Pagá con tus tarjetas favoritas y coordiná tu compra por WhatsApp en minutos.',
   note: 'En compras superando los $50.000.',
   cards: ['Visa', 'Mastercard', 'Naranja X'],
-  perks: ['Sin recargo', 'Compra segura', 'Atencion personalizada'],
+  perks: ['Sin recargo', 'Compra segura', 'Atención personalizada'],
 }
 
 export const TRUST_STRIP_ITEMS = [
-  'Atencion por WhatsApp',
+  'Atención por WhatsApp',
   'Productos con stock actualizado',
   'Retiro coordinado',
   'Asesoramiento para elegir modelo',

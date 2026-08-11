@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://eleeme-catalogo.vercel.app/sitemap.xml

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   activeColors,
   colorStock,
@@ -86,6 +86,7 @@ export default function ProductModal({
   const [activeImage, setActiveImage] = useState(0)
   const [selectedModel, setSelectedModel] = useState('')
   const [cartFeedback, setCartFeedback] = useState('')
+  const panelRef = useRef(null)
 
   const images = productImages(product)
   const videos = productVideos(product)
@@ -142,15 +143,49 @@ export default function ProductModal({
       if (event.key === 'Escape') {
         if (lightboxOpen) setLightboxOpen(false)
         else onClose()
-      } else if (lightboxOpen && images.length > 1) {
+        return
+      }
+
+      if (lightboxOpen && images.length > 1) {
         if (event.key === 'ArrowRight') goImage(1)
         else if (event.key === 'ArrowLeft') goImage(-1)
+        return
+      }
+
+      // Mantiene el foco dentro del modal mientras está abierto: sin esto,
+      // con Tab se sale al catálogo de atrás sin haber cerrado nada.
+      if (event.key === 'Tab' && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea, select, video[controls], [tabindex]:not([tabindex="-1"])'
+        )
+        const visible = [...focusables].filter((el) => el.offsetParent !== null)
+        if (!visible.length) return
+
+        const first = visible[0]
+        const last = visible[visible.length - 1]
+
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
       }
     }
 
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [images.length, lightboxOpen, onClose])
+
+  // Al abrir, el foco entra al modal; al cerrar, vuelve a donde estaba.
+  useEffect(() => {
+    const previouslyFocused = document.activeElement
+    panelRef.current?.focus()
+    return () => {
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+    }
+  }, [])
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -182,7 +217,12 @@ export default function ProductModal({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div
-        className="relative w-full sm:max-w-3xl max-h-[92dvh] sm:max-h-[88vh] bg-white dark:bg-[#1c1c1e] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col animate-slide-up"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="product-modal-title"
+        tabIndex={-1}
+        className="relative w-full sm:max-w-3xl max-h-[92dvh] sm:max-h-[88vh] bg-white dark:bg-[#1c1c1e] rounded-t-3xl sm:rounded-2xl overflow-hidden flex flex-col animate-slide-up focus:outline-none"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between px-3 sm:px-4 h-12 flex-shrink-0 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1c1c1e]">
@@ -270,7 +310,10 @@ export default function ProductModal({
               </span>
             )}
 
-            <h2 className="text-2xl font-semibold text-[#1d1d1f] dark:text-white mt-2 mb-1 leading-tight">
+            <h2
+              id="product-modal-title"
+              className="text-2xl font-semibold text-[#1d1d1f] dark:text-white mt-2 mb-1 leading-tight"
+            >
               {product.nombre}
             </h2>
 

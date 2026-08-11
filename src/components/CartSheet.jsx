@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { formatPrice } from '../data/products'
 import { MinusIcon, PlusIcon, ShoppingBagIcon, TrashIcon, WhatsAppIcon, XIcon } from './Icons'
 
@@ -13,6 +14,27 @@ export default function CartSheet({
   onRemove,
   onClear,
 }) {
+  const panelRef = useRef(null)
+
+  // Cerrar con Escape y devolver el foco a donde estaba, igual que en el modal
+  // de producto: abierto el pedido, Escape es lo primero que intenta la gente.
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    const previouslyFocused = document.activeElement
+    panelRef.current?.focus()
+
+    const handleKey = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      window.removeEventListener('keydown', handleKey)
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus()
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   return (
@@ -20,7 +42,12 @@ export default function CartSheet({
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <aside
-        className="relative ml-auto h-full w-full sm:max-w-md bg-white dark:bg-[#1c1c1e] animate-slide-up sm:animate-scale-in flex flex-col"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-sheet-title"
+        tabIndex={-1}
+        className="relative ml-auto h-full w-full sm:max-w-md bg-white dark:bg-[#1c1c1e] animate-slide-up sm:animate-scale-in flex flex-col focus:outline-none"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-gray-100 dark:border-white/10">
@@ -29,7 +56,9 @@ export default function CartSheet({
               <ShoppingBagIcon className="w-5 h-5" />
             </span>
             <div>
-              <h2 className="text-base font-semibold text-[#1d1d1f] dark:text-white">Tu pedido</h2>
+              <h2 id="cart-sheet-title" className="text-base font-semibold text-[#1d1d1f] dark:text-white">
+                Tu pedido
+              </h2>
               <p className="text-sm text-[#6e6e73] dark:text-[#86868b]">
                 {totalItems} {totalItems === 1 ? 'item' : 'items'} agregados
               </p>

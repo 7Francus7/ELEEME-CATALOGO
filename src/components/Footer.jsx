@@ -44,7 +44,7 @@ export default function Footer({ onAdminOpen }) {
                   href={`https://wa.me/${WHATSAPP_NUMBER}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#25d366] transition-colors"
+                  className="inline-flex items-center gap-2 min-h-[44px] -my-2 hover:text-[#25d366] transition-colors"
                 >
                   <WhatsAppIcon className="w-4 h-4" />
                   WhatsApp
@@ -62,7 +62,7 @@ export default function Footer({ onAdminOpen }) {
                   href={INSTAGRAM_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:text-[#e1306c] transition-colors"
+                  className="inline-flex items-center gap-2 min-h-[44px] -my-2 hover:text-[#e1306c] transition-colors"
                 >
                   <InstagramIcon className="w-4 h-4" />
                   @eleeme.st.acc

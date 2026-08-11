@@ -47,7 +47,7 @@ export default function StrategicCatalogSections({
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
         <div className="flex items-center gap-4">
           <h2 className="text-[22px] sm:text-[28px] font-semibold tracking-tight text-[#1d1d1f] dark:text-white">
-            Catalogo
+            Catálogo
           </h2>
           <span className="h-px flex-1 bg-black/[0.08] dark:bg-white/[0.10]" />
           <span className="text-[13px] font-medium text-[#86868b] whitespace-nowrap">

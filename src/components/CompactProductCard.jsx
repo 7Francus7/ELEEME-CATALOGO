@@ -68,8 +68,17 @@ export default function CompactProductCard({
           </span>
         </div>
 
-        <h3 className="mt-2 text-[15px] font-semibold leading-[1.3] tracking-tight text-[#1d1d1f] dark:text-white line-clamp-2">
-          {product.nombre}
+        <h3 className="mt-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onOpen(product)
+            }}
+            className="text-left text-[15px] font-semibold leading-[1.3] tracking-tight text-[#1d1d1f] dark:text-white line-clamp-2"
+          >
+            {product.nombre}
+          </button>
         </h3>
 
         <div className="mt-3 flex items-end justify-between gap-3">
@@ -95,9 +104,9 @@ export default function CompactProductCard({
             type="button"
             onClick={handleAction}
             disabled={isDisabled}
-            className={`rounded-full px-3 py-2 text-xs font-semibold transition-colors ${
+            className={`inline-flex items-center justify-center whitespace-nowrap min-h-[44px] rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
               isDisabled
-                ? 'bg-[#d2d2d7] dark:bg-white/10 text-white cursor-not-allowed'
+                ? 'bg-[#e8e8ed] dark:bg-white/10 text-[#6e6e73] dark:text-white/60 cursor-not-allowed'
                 : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
             }`}
           >
