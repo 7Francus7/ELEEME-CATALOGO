@@ -371,14 +371,14 @@ export default function ProductModal({
                   <button
                     onClick={() => stepGallery(-1)}
                     aria-label="Foto anterior"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 hidden sm:flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors"
+                    className="absolute left-2 top-1/2 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/20 hover:bg-black/75 backdrop-blur-sm transition-colors"
                   >
                     <ChevronLeftIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={() => stepGallery(1)}
                     aria-label="Foto siguiente"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 hidden sm:flex items-center justify-center rounded-full bg-black/45 text-white hover:bg-black/65 backdrop-blur-sm transition-colors rotate-180"
+                    className="absolute right-2 top-1/2 z-10 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/20 hover:bg-black/75 backdrop-blur-sm transition-colors rotate-180"
                   >
                     <ChevronLeftIcon className="w-5 h-5" />
                   </button>
@@ -765,7 +765,7 @@ export default function ProductModal({
               event.stopPropagation()
               setLightboxOpen(false)
             }}
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 z-10 w-11 h-11 flex items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/25 backdrop-blur-sm hover:bg-black/80 transition-colors"
             aria-label="Cerrar"
           >
             <XIcon className="w-5 h-5" />
@@ -779,7 +779,7 @@ export default function ProductModal({
                   goImage(-1)
                 }}
                 aria-label="Foto anterior"
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+                className="absolute left-3 sm:left-4 top-1/2 z-10 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/25 backdrop-blur-sm hover:bg-black/80 transition-colors"
               >
                 <ChevronLeftIcon className="w-6 h-6" />
               </button>
@@ -789,11 +789,11 @@ export default function ProductModal({
                   goImage(1)
                 }}
                 aria-label="Foto siguiente"
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors rotate-180"
+                className="absolute right-3 sm:right-4 top-1/2 z-10 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-full bg-black/60 text-white ring-1 ring-white/25 backdrop-blur-sm hover:bg-black/80 transition-colors rotate-180"
               >
                 <ChevronLeftIcon className="w-6 h-6" />
               </button>
-              <span className="absolute bottom-5 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white">
+              <span className="absolute bottom-5 left-1/2 z-10 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-sm font-medium text-white ring-1 ring-white/25 backdrop-blur-sm">
                 {safeActive + 1} / {images.length}
               </span>
             </>
