@@ -13,6 +13,7 @@ import { WHATSAPP_NUMBER } from '../data/catalogConfig'
 import { getVideo } from '../utils/videoStore'
 import { CheckIcon, ChevronLeftIcon, ShareIcon, WhatsAppIcon, XIcon } from './Icons'
 import CatalogImage from './CatalogImage'
+import DisclosureSection from './DisclosureSection'
 import RelatedProducts from './RelatedProducts'
 
 function ProductVideo({ video }) {
@@ -87,7 +88,12 @@ export default function ProductModal({
   const [selectedModel, setSelectedModel] = useState('')
   const [cartFeedback, setCartFeedback] = useState('')
   const [shareStatus, setShareStatus] = useState('')
+  // Las listas de modelos y colores arrancan plegadas: son 21 y 12 items, y
+  // desplegadas empujaban el precio y los botones muy abajo.
+  const [modelsOpen, setModelsOpen] = useState(false)
+  const [colorsOpen, setColorsOpen] = useState(false)
   const panelRef = useRef(null)
+  const modelsTriggerRef = useRef(null)
 
   // El modal siempre está abierto en la URL del producto (/producto/<handle>),
   // así que alcanza con leerla; se sacan los query params para compartir limpio.
@@ -140,6 +146,8 @@ export default function ProductModal({
     setNotifyStatus('')
     setEmail('')
     setActiveImage(0)
+    setModelsOpen(false)
+    setColorsOpen(false)
   }, [product.id])
 
   const currentModel = needsModel ? selectedModel || null : null
@@ -377,10 +385,26 @@ export default function ProductModal({
             </p>
 
             {needsModel && product.modelos.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73] dark:text-[#86868b] mb-3">
-                  Elegí un modelo
-                </h3>
+              <DisclosureSection
+                id="modelos"
+                label="Modelo"
+                open={modelsOpen}
+                onToggle={() => setModelsOpen((value) => !value)}
+                highlight={!currentModel}
+                triggerRef={modelsTriggerRef}
+                summary={
+                  currentModel ? (
+                    <span className="text-[#0071e3] font-semibold">{currentModel}</span>
+                  ) : (
+                    <span className="text-[#0071e3] font-semibold">
+                      Elegí un modelo
+                      <span className="ml-1.5 font-normal text-[#6e6e73] dark:text-[#86868b]">
+                        · {product.modelos.length} disponibles
+                      </span>
+                    </span>
+                  )
+                }
+              >
                 <div className="flex flex-wrap gap-2">
                   {product.modelos.map((model) => {
                     const modelOut = (modelStock(product, model) ?? 0) === 0
@@ -388,9 +412,15 @@ export default function ProductModal({
                       <button
                         key={model}
                         type="button"
+                        aria-pressed={model === currentModel}
                         onClick={() => {
                           setSelectedModel(model)
                           setCartFeedback('')
+                          // Al elegir, se pliega y el encabezado confirma la selección.
+                          // El foco vuelve al encabezado: si no, al desmontarse el
+                          // panel se perdería fuera del modal y se rompía el Tab.
+                          setModelsOpen(false)
+                          modelsTriggerRef.current?.focus()
                         }}
                         className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
                           model === currentModel
@@ -410,23 +440,43 @@ export default function ProductModal({
                     )
                   })}
                 </div>
-                {!currentModel && (
-                  <p className="mt-3 text-sm text-[#6e6e73] dark:text-[#86868b]">
-                    Seleccioná un modelo para ver la disponibilidad por color.
-                  </p>
-                )}
-              </div>
+              </DisclosureSection>
             )}
 
             {colors.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#6e6e73] dark:text-[#86868b] mb-3">
-                  Colores y disponibilidad
-                  {currentModel && (
-                    <span className="text-[#0071e3] normal-case tracking-normal font-medium"> · {currentModel}</span>
-                  )}
-                </h3>
-
+              <DisclosureSection
+                id="colores"
+                label="Colores"
+                open={colorsOpen}
+                onToggle={() => setColorsOpen((value) => !value)}
+                // El resumen queda en una sola línea: qué colores hay y cuántos.
+                // El modelo elegido no se repite acá porque la fila de arriba ya
+                // lo muestra; va adentro del panel, que es donde importa saber a
+                // qué modelo corresponde la disponibilidad.
+                summary={
+                  <span className="flex items-center gap-2">
+                    <span className="flex items-center -space-x-1.5">
+                      {colors.slice(0, 6).map((color) => (
+                        <span
+                          key={color.nombre}
+                          title={color.nombre}
+                          className="h-4 w-4 rounded-full border border-white dark:border-[#1c1c1e] shadow-sm"
+                          style={{ backgroundColor: color.codigo }}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-[#6e6e73] dark:text-[#86868b]">
+                      {colors.length} {colors.length === 1 ? 'color' : 'colores'}
+                    </span>
+                  </span>
+                }
+              >
+                {stockVisible && currentModel && (
+                  <p className="mb-3 text-[13px] text-[#6e6e73] dark:text-[#86868b]">
+                    Disponibilidad para{' '}
+                    <span className="font-semibold text-[#0071e3]">{currentModel}</span>
+                  </p>
+                )}
                 {!stockVisible ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
@@ -494,9 +544,14 @@ export default function ProductModal({
                     })}
                   </div>
                 )}
+              </DisclosureSection>
+            )}
 
-                {someColorOutOfStock && (
-                  <div className="mt-4 bg-amber-50 dark:bg-amber-500/10 rounded-xl p-4">
+            {/* El aviso de restock queda FUERA del plegable: si quedara adentro,
+                se escondería justo cuando hay algo agotado que avisar. */}
+            {colors.length > 0 && someColorOutOfStock && (
+              <div className="mb-5">
+                <div className="bg-amber-50 dark:bg-amber-500/10 rounded-xl p-4">
                     <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">
                       ¿Querés que te avise cuando vuelva el stock?
                     </p>
@@ -528,11 +583,10 @@ export default function ProductModal({
                         </button>
                       </div>
                     )}
-                    {notifyStatus === 'invalid' && (
-                      <p className="text-xs text-red-500 mt-2">Ingresá un email válido.</p>
-                    )}
-                  </div>
-                )}
+                  {notifyStatus === 'invalid' && (
+                    <p className="text-xs text-red-500 mt-2">Ingresá un email válido.</p>
+                  )}
+                </div>
               </div>
             )}
 
