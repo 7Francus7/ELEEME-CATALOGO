@@ -11,8 +11,9 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
-    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <!-- Un solo theme-color, sincronizado con el tema real del catálogo (no con
+         el del sistema): el script de abajo y el botón del header lo actualizan. -->
+    <meta name="theme-color" content="#f5f5f7" />
     <meta name="apple-mobile-web-app-title" content="ELEEME" />
 
     <!-- Vista previa al compartir el catálogo por WhatsApp / Instagram -->
@@ -36,18 +37,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
     <!--
-      Pinta el fondo correcto antes de que monte React. Sin esto, en modo oscuro
-      se ve un flash blanco mientras carga el JS. Misma clave que usa App.jsx.
+      Pinta el fondo correcto antes de que monte React. Sin esto, al entrar en
+      modo oscuro se ve un flash claro mientras carga el JS.
+
+      El catálogo abre en modo claro por defecto: sólo se pone oscuro si la
+      persona lo eligió antes con el botón del header. Ya no se mira
+      prefers-color-scheme, así que quien tiene el teléfono en oscuro igual ve
+      la tienda clara la primera vez. Misma clave que usa App.jsx.
     -->
     <script>
       (function () {
         try {
-          var stored = localStorage.getItem('eleeme_dark_mode')
-          var dark = stored !== null
-            ? stored === 'true'
-            : window.matchMedia('(prefers-color-scheme: dark)').matches
+          var dark = localStorage.getItem('eleeme_dark_mode') === 'true'
           if (dark) document.documentElement.classList.add('dark')
           document.documentElement.style.backgroundColor = dark ? '#000000' : '#f5f5f7'
+          var meta = document.querySelector('meta[name="theme-color"]')
+          if (meta) meta.setAttribute('content', dark ? '#000000' : '#f5f5f7')
         } catch (e) {}
       })()
     </script>

@@ -32,10 +32,20 @@ import { categoryFromSlug, categorySlug, productFromSlug, productSlug } from './
 
 const DARK_KEY = 'eleeme_dark_mode'
 
+// Modo claro por defecto. Sólo se abre en oscuro si la persona lo eligió antes
+// con el botón del header; ya no se sigue el tema del sistema. Quien tenga el
+// teléfono en oscuro ve igual la tienda clara la primera vez.
+// Tiene que coincidir con el script de index.html que pinta el fondo antes de
+// que monte React, o se ve un flash al cargar.
 function initDark() {
-  const stored = localStorage.getItem(DARK_KEY)
-  if (stored !== null) return stored === 'true'
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
+  return localStorage.getItem(DARK_KEY) === 'true'
+}
+
+// Mantiene la barra del navegador (mobile) del mismo color que el catálogo.
+function syncThemeColor(dark) {
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', dark ? '#000000' : '#f5f5f7')
 }
 
 export default function App() {
@@ -183,6 +193,8 @@ export default function App() {
     const next = !isDark
     setIsDark(next)
     document.documentElement.classList.toggle('dark', next)
+    document.documentElement.style.backgroundColor = next ? '#000000' : '#f5f5f7'
+    syncThemeColor(next)
     localStorage.setItem(DARK_KEY, String(next))
   }
 
