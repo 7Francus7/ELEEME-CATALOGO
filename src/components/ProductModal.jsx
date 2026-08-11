@@ -11,7 +11,7 @@ import {
 } from '../data/products'
 import { WHATSAPP_NUMBER } from '../data/catalogConfig'
 import { getVideo } from '../utils/videoStore'
-import { ChevronLeftIcon, WhatsAppIcon, XIcon } from './Icons'
+import { CheckIcon, ChevronLeftIcon, ShareIcon, WhatsAppIcon, XIcon } from './Icons'
 import CatalogImage from './CatalogImage'
 import RelatedProducts from './RelatedProducts'
 
@@ -86,7 +86,32 @@ export default function ProductModal({
   const [activeImage, setActiveImage] = useState(0)
   const [selectedModel, setSelectedModel] = useState('')
   const [cartFeedback, setCartFeedback] = useState('')
+  const [shareStatus, setShareStatus] = useState('')
   const panelRef = useRef(null)
+
+  // El modal siempre está abierto en la URL del producto (/producto/<handle>),
+  // así que alcanza con leerla; se sacan los query params para compartir limpio.
+  const handleShare = async () => {
+    const url = `${window.location.origin}${window.location.pathname}`
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.nombre, url })
+        return
+      } catch (error) {
+        // Cancelar el diálogo nativo no es un error: no mostramos nada.
+        if (error?.name === 'AbortError') return
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url)
+      setShareStatus('copied')
+    } catch {
+      setShareStatus('failed')
+    }
+    setTimeout(() => setShareStatus(''), 2200)
+  }
 
   const images = productImages(product)
   const videos = productVideos(product)
@@ -235,13 +260,40 @@ export default function ProductModal({
             Atrás
           </button>
 
-          <button
-            onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
-            aria-label="Cerrar"
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShare}
+              className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#1d1d1f] dark:text-white text-[13px] font-semibold hover:text-[#0071e3] transition-colors"
+              aria-label={`Compartir ${product.nombre}`}
+            >
+              {shareStatus === 'copied' ? (
+                <>
+                  <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="hidden sm:inline">Enlace copiado</span>
+                </>
+              ) : (
+                <>
+                  <ShareIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {shareStatus === 'failed' ? 'No se pudo copiar' : 'Compartir'}
+                  </span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={onClose}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-[#f5f5f7] dark:bg-[#2c2c2e] text-[#6e6e73] dark:text-[#86868b] hover:text-[#1d1d1f] dark:hover:text-white transition-colors"
+              aria-label="Cerrar"
+            >
+              <XIcon className="w-4 h-4" />
+            </button>
+          </div>
+
+          <span aria-live="polite" className="sr-only">
+            {shareStatus === 'copied' ? 'Enlace copiado al portapapeles' : ''}
+          </span>
         </div>
 
         <div className="flex flex-col sm:flex-row overflow-y-auto sm:overflow-hidden flex-1">

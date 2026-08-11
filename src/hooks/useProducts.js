@@ -100,6 +100,10 @@ function loadProducts() {
 
 export function useProducts() {
   const [products, setProducts] = useState(loadProducts)
+  // Pasa a true cuando el fetch del catálogo en la nube terminó (con datos o no).
+  // Lo usa el ruteo para no dar por inválido el slug de un producto que todavía
+  // no llegó: hasta que no se resolvió, un deep link no se descarta.
+  const [remoteSettled, setRemoteSettled] = useState(false)
   // Si el dueño edita y guarda mientras el fetch de la nube (lento en el celular)
   // todavía está en vuelo, esa respuesta llega DESPUÉS y pisaba la edición recién
   // hecha (en memoria, en localStorage y en el snapshot que se sube). Esta bandera
@@ -111,15 +115,19 @@ export function useProducts() {
   useEffect(() => {
     rememberSlice('products', products)
     let alive = true
-    loadRemoteCatalog().then((remote) => {
-      // No pisar ediciones locales ya guardadas con la respuesta vieja del fetch.
-      if (!alive || localEdited.current) return
-      if (!remote || !Array.isArray(remote.products)) return
-      const normalized = withSequentialManualOrder(remote.products.map(normalizeProduct))
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
-      rememberSlice('products', normalized)
-      setProducts(normalized)
-    })
+    loadRemoteCatalog()
+      .then((remote) => {
+        // No pisar ediciones locales ya guardadas con la respuesta vieja del fetch.
+        if (!alive || localEdited.current) return
+        if (!remote || !Array.isArray(remote.products)) return
+        const normalized = withSequentialManualOrder(remote.products.map(normalizeProduct))
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized)) } catch {}
+        rememberSlice('products', normalized)
+        setProducts(normalized)
+      })
+      .finally(() => {
+        if (alive) setRemoteSettled(true)
+      })
     return () => { alive = false }
   }, [])
 
@@ -139,5 +147,5 @@ export function useProducts() {
     setProducts(withSequentialManualOrder(defaultProducts.map(normalizeProduct)))
   }
 
-  return { products, saveProducts, resetToDefaults }
+  return { products, saveProducts, resetToDefaults, remoteSettled }
 }

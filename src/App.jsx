@@ -27,6 +27,8 @@ import {
   isProductVisible,
   sortProductsForCatalog,
 } from './utils/catalogSelectors'
+import { useCatalogRoute } from './hooks/useCatalogRoute'
+import { categoryFromSlug, categorySlug, productFromSlug, productSlug } from './utils/slugs'
 
 const DARK_KEY = 'eleeme_dark_mode'
 
@@ -37,7 +39,7 @@ function initDark() {
 }
 
 export default function App() {
-  const { products, saveProducts, resetToDefaults } = useProducts()
+  const { products, saveProducts, resetToDefaults, remoteSettled } = useProducts()
   const { categories, saveCategories, resetCategories } = useCategories()
   const { bannerConfig, saveBannerConfig, resetBannerConfig } = useCommercialBanner()
   const {
@@ -58,10 +60,22 @@ export default function App() {
   )
   const navCategories = useMemo(() => ['Todos', ...catalogCategories], [catalogCategories])
 
-  const [selectedCategory, setSelectedCategory] = useState('Todos')
-  const [selectedModel, setSelectedModel] = useState('Todos')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState(null)
+  // La URL es la fuente de verdad de categoría / búsqueda / producto: así el
+  // historial del navegador, los deep links y el botón Atrás de Android salen
+  // gratis, sin duplicar estado.
+  const { route, navigate, closeOverlay } = useCatalogRoute()
+
+  const selectedCategory = useMemo(
+    () => categoryFromSlug(route.categorySlug, catalogCategories) || 'Todos',
+    [catalogCategories, route.categorySlug]
+  )
+  const searchQuery = route.query
+  const selectedModel = route.model || 'Todos'
+  const selectedProduct = useMemo(
+    () => productFromSlug(route.product, products),
+    [products, route.product]
+  )
+
   const [adminOpen, setAdminOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const [isDark, setIsDark] = useState(() => {
@@ -70,21 +84,47 @@ export default function App() {
     return dark
   })
 
+  // Cambiar de categoría limpia el modelo, igual que antes.
   const handleCategoryChange = (category) => {
-    setSelectedCategory(category)
-    setSelectedModel('Todos')
+    navigate({
+      categorySlug: category && category !== 'Todos' ? categorySlug(category) : null,
+      model: null,
+      product: null,
+    })
   }
 
   const goHome = () => {
-    setSelectedCategory('Todos')
-    setSelectedModel('Todos')
-    setSearchQuery('')
+    navigate({ categorySlug: null, model: null, query: '', product: null })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const handleTileSelect = (category) => {
     handleCategoryChange(category)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Escribir en el buscador reemplaza la entrada actual: si empujáramos una por
+  // tecla, el botón Atrás tendría que deshacer letra por letra.
+  const handleSearchChange = (value) => {
+    navigate({ query: value, product: null }, { replace: true })
+  }
+
+  const handleModelChange = (model) => {
+    navigate({ model: model && model !== 'Todos' ? model : null }, { replace: true })
+  }
+
+  // Abrir producto = entrada nueva de historial. Cerrarlo vuelve por historial,
+  // que es exactamente lo que hace Atrás en Android.
+  const handleOpenProduct = (product) => {
+    if (!product) return
+    navigate({ product: productSlug(product) })
+  }
+
+  const handleCloseProduct = () => {
+    closeOverlay({
+      product: null,
+      categorySlug: selectedProduct?.categoria ? categorySlug(selectedProduct.categoria) : null,
+    })
   }
 
   const handleNotifyRestock = (productId, email) => {
@@ -148,11 +188,29 @@ export default function App() {
 
   const handleAddToCart = (product, model = null) => addItem(product, model)
 
+  // Fallback de slugs que no existen (link viejo, categoría renombrada, typo).
+  // Se espera a que el catálogo de la nube haya resuelto: hasta entonces un slug
+  // válido puede parecer inválido sólo porque su producto todavía no llegó.
+  // Nunca rompe: limpia la URL con replace y deja al usuario en el catálogo.
   useEffect(() => {
-    if (selectedCategory !== 'Todos' && !catalogCategories.includes(selectedCategory)) {
-      setSelectedCategory('Todos')
+    if (!remoteSettled) return
+
+    if (route.product && !selectedProduct) {
+      navigate({ product: null }, { replace: true })
+      return
     }
-  }, [catalogCategories, selectedCategory])
+
+    if (route.categorySlug && !categoryFromSlug(route.categorySlug, catalogCategories)) {
+      navigate({ categorySlug: null, model: null }, { replace: true })
+    }
+  }, [
+    catalogCategories,
+    navigate,
+    remoteSettled,
+    route.categorySlug,
+    route.product,
+    selectedProduct,
+  ])
 
   useEffect(() => {
     document.body.style.overflow = adminOpen || selectedProduct || cartOpen ? 'hidden' : ''
@@ -171,8 +229,9 @@ export default function App() {
     () => products.filter(isProductVisible).length,
     [products]
   )
-  const activeProduct =
-    products.find((product) => product.id === selectedProduct?.id) || selectedProduct || null
+  // selectedProduct ya sale resuelto contra `products`, así que refleja las
+  // ediciones del admin en vivo sin necesidad de volver a buscarlo.
+  const activeProduct = selectedProduct
   const relatedProducts = useMemo(
     () => getRelatedProducts(products, activeProduct, 3),
     [activeProduct, products]
@@ -186,9 +245,9 @@ export default function App() {
         onCategoryChange={handleCategoryChange}
         models={modelsForCategory}
         selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
+        onModelChange={handleModelChange}
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
         isDark={isDark}
         onToggleDark={toggleDark}
         onGoHome={goHome}
@@ -224,22 +283,19 @@ export default function App() {
               sections={strategicSections}
               totalProducts={visibleProductCount}
               activeModel={activeModel}
-              onOpen={setSelectedProduct}
+              onOpen={handleOpenProduct}
               onAddToCart={handleAddToCart}
             />
           ) : (
             <ProductGrid
               products={sortedProducts}
-              onOpen={setSelectedProduct}
+              onOpen={handleOpenProduct}
               onAddToCart={handleAddToCart}
               searchQuery={searchQuery}
               selectedCategory={selectedCategory}
               activeModel={activeModel}
               showTitle
-              onClearSearch={() => {
-                handleCategoryChange('Todos')
-                setSearchQuery('')
-              }}
+              onClearSearch={goHome}
             />
           )}
         </div>
@@ -255,8 +311,8 @@ export default function App() {
           relatedProducts={relatedProducts}
           onNotifyRestock={handleNotifyRestock}
           onAddToCart={handleAddToCart}
-          onOpenProduct={setSelectedProduct}
-          onClose={() => setSelectedProduct(null)}
+          onOpenProduct={handleOpenProduct}
+          onClose={handleCloseProduct}
         />
       )}
 
