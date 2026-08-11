@@ -296,8 +296,8 @@ export default function ProductModal({
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row overflow-y-auto sm:overflow-hidden flex-1">
-          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 sm:overflow-y-auto">
+        <div className="flex flex-col sm:flex-row overflow-y-auto overscroll-contain sm:overflow-hidden flex-1">
+          <div className="sm:w-2/5 bg-[#f5f5f7] dark:bg-[#2c2c2e] flex-shrink-0 sm:overflow-y-auto sm:overscroll-contain">
             <div className="relative group">
               <CatalogImage
                 src={images[safeActive]}
@@ -338,14 +338,17 @@ export default function ProductModal({
             </div>
 
             {images.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto p-3">
+              <div className="flex gap-2 overflow-x-auto overscroll-x-contain scrollbar-hide snap-x snap-mandatory p-3">
                 {images.map((src, index) => (
                   <button
                     key={index}
                     onClick={() => setActiveImage(index)}
                     aria-label={`Ver foto ${index + 1}`}
-                    className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
-                      index === safeActive ? 'border-[#0071e3]' : 'border-transparent opacity-70 hover:opacity-100'
+                    aria-current={index === safeActive}
+                    className={`flex-shrink-0 snap-start w-14 h-14 rounded-xl overflow-hidden border-2 transition-all ${
+                      index === safeActive
+                        ? 'border-[#0071e3]'
+                        : 'border-transparent opacity-60 hover:opacity-100 hover:border-black/10 dark:hover:border-white/20'
                     }`}
                   >
                     <CatalogImage src={src} alt="" fallbackText={product.nombre} className="w-full h-full object-cover" />
@@ -355,7 +358,7 @@ export default function ProductModal({
             )}
           </div>
 
-          <div className="sm:w-3/5 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto">
+          <div className="sm:w-3/5 min-w-0 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto overscroll-contain">
             {product.tag && (
               <span className="text-xs font-semibold uppercase tracking-wider text-[#0071e3]">
                 {product.tag}
@@ -583,12 +586,16 @@ export default function ProductModal({
                 )}
               </div>
 
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              {/* Apilados, no en fila: la columna derecha del modal mide ~397px
+                  útiles en TODOS los breakpoints (es 3/5 de max-w-3xl), y los dos
+                  botones juntos necesitan ~503px. En fila, el de WhatsApp quedaba
+                  cortado y aparecía un scroll horizontal dentro del panel. */}
+              <div className="flex flex-col gap-2">
                 <button
                   type="button"
                   onClick={handleAddToCart}
                   disabled={!canAddToCart}
-                  className="flex-1 sm:flex-none bg-[#0071e3] hover:bg-[#0077ed] disabled:bg-[#d2d2d7] dark:disabled:bg-white/10 disabled:cursor-not-allowed active:scale-95 text-white text-sm font-semibold px-5 py-3.5 rounded-full transition-all duration-200"
+                  className="w-full bg-[#0071e3] hover:bg-[#0077ed] disabled:bg-[#e8e8ed] dark:disabled:bg-white/10 disabled:text-[#6e6e73] dark:disabled:text-white/60 disabled:cursor-not-allowed active:scale-[0.98] text-white text-sm font-semibold px-4 sm:px-5 py-3.5 rounded-full transition-all duration-200"
                 >
                   {addButtonLabel}
                 </button>
@@ -597,9 +604,9 @@ export default function ProductModal({
                   href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-[#25d366] hover:bg-[#22c55e] active:scale-95 text-white text-sm font-semibold px-5 py-3.5 rounded-full transition-all duration-200 shadow-lg shadow-green-500/20"
+                  className="w-full flex items-center justify-center gap-2 bg-[#25d366] hover:bg-[#22c55e] active:scale-[0.98] text-white text-sm font-semibold px-4 sm:px-5 py-3.5 rounded-full transition-all duration-200 shadow-lg shadow-green-500/20"
                 >
-                  <WhatsAppIcon className="w-5 h-5" />
+                  <WhatsAppIcon className="w-5 h-5 flex-shrink-0" />
                   Consultar y cerrar por WhatsApp
                 </a>
               </div>
