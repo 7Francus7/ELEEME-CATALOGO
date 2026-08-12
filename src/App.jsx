@@ -267,7 +267,9 @@ export default function App() {
         onOpenCart={() => setCartOpen(true)}
       />
 
-      <main className={cartCount > 0 ? 'pb-24 sm:pb-28' : ''}>
+      {/* La barra de pedido ahora se auto-oculta a los 3s, así que ya no hace
+          falta reservarle espacio fijo abajo: dejaba un hueco vacío permanente. */}
+      <main>
         {showHero && <CatalogIntro />}
 
         {showHero && (
