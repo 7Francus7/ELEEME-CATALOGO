@@ -280,7 +280,9 @@ export default function ProductModal({
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      {/* Fondo bien apagado: con /60 se seguían leyendo los chips del header y
+          su línea inferior por detrás de la ficha, y parecían parte del modal. */}
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-md" />
 
       <div
         ref={panelRef}
@@ -359,8 +361,12 @@ export default function ProductModal({
                     fallbackText={product.nombre}
                     loading={index === 0 ? 'eager' : 'lazy'}
                     onClick={() => setLightboxOpen(true)}
-                    className={`w-full flex-shrink-0 snap-center h-72 sm:h-[420px] lg:h-[500px] cursor-zoom-in ${
-                      fitContain ? 'object-contain p-8' : 'object-cover'
+                    // La ficha nunca recorta: con object-cover una foto vertical
+                    // de funda perdía la parte de arriba y la de abajo. Acá se
+                    // muestra el producto entero y el fondo gris de la columna
+                    // rellena lo que sobra.
+                    className={`w-full flex-shrink-0 snap-center h-72 sm:h-[420px] lg:h-[500px] cursor-zoom-in object-contain ${
+                      fitContain ? 'p-8' : 'p-4'
                     }`}
                   />
                 ))}
