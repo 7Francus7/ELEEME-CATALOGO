@@ -95,6 +95,8 @@ export default function ProductModal({
   const panelRef = useRef(null)
   const modelsTriggerRef = useRef(null)
   const galleryRef = useRef(null)
+  const infoRef = useRef(null)
+  const contentRef = useRef(null)
 
   // El modal siempre está abierto en la URL del producto (/producto/<handle>),
   // así que alcanza con leerla; se sacan los query params para compartir limpio.
@@ -198,6 +200,16 @@ export default function ProductModal({
   // lightbox se alinea con la que quedó elegida ahí adentro.
   useEffect(() => {
     scrollToImage(0, 'auto')
+  }, [product.id])
+
+  // Abrir un producto relacionado reemplaza el contenido de esta misma ventana,
+  // pero el scroll se quedaba donde estaba: aparecía el producto nuevo empezado
+  // por la mitad y parecía otra ventana rara. Los dos contenedores que
+  // scrollean (la columna de info en desktop, el panel entero en mobile)
+  // vuelven arriba.
+  useEffect(() => {
+    infoRef.current?.scrollTo({ top: 0 })
+    contentRef.current?.scrollTo({ top: 0 })
   }, [product.id])
 
   useEffect(() => {
@@ -339,7 +351,10 @@ export default function ProductModal({
           </span>
         </div>
 
-        <div className="flex flex-col sm:flex-row overflow-y-auto overscroll-contain sm:overflow-hidden flex-1">
+        <div
+          ref={contentRef}
+          className="flex flex-col sm:flex-row overflow-y-auto overscroll-contain sm:overflow-hidden flex-1"
+        >
           {/* Sin scroll propio y estirada a todo el alto: la foto queda quieta al
               lado de la información en vez de irse al scrollear, y el fondo gris
               llena la columna en lugar de cortarse debajo de las miniaturas. */}
@@ -423,7 +438,10 @@ export default function ProductModal({
             )}
           </div>
 
-          <div className="sm:w-1/2 lg:w-[45%] min-w-0 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto overscroll-contain">
+          <div
+            ref={infoRef}
+            className="sm:w-1/2 lg:w-[45%] min-w-0 p-6 sm:p-8 pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:pb-8 overflow-y-auto overscroll-contain"
+          >
             {product.tag && (
               <span className="text-xs font-semibold uppercase tracking-wider text-[#0071e3]">
                 {product.tag}

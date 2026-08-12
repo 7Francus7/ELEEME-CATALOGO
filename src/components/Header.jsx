@@ -1,89 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import {
   SearchIcon,
   XIcon,
   SunIcon,
   MoonIcon,
   ChevronLeftIcon,
-  ChevronRightIcon,
   ShoppingBagIcon,
 } from './Icons'
-
-function ScrollableChipsRow({ ariaLabel, children, rowClassName = '' }) {
-  const rowRef = useRef(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-
-  useEffect(() => {
-    const row = rowRef.current
-    if (!row) return undefined
-
-    const updateScrollState = () => {
-      const maxScroll = row.scrollWidth - row.clientWidth
-      setCanScrollLeft(row.scrollLeft > 8)
-      setCanScrollRight(maxScroll > 8 && row.scrollLeft < maxScroll - 8)
-    }
-
-    updateScrollState()
-    row.addEventListener('scroll', updateScrollState, { passive: true })
-    window.addEventListener('resize', updateScrollState)
-
-    const resizeObserver = window.ResizeObserver
-      ? new ResizeObserver(updateScrollState)
-      : null
-    resizeObserver?.observe(row)
-
-    return () => {
-      row.removeEventListener('scroll', updateScrollState)
-      window.removeEventListener('resize', updateScrollState)
-      resizeObserver?.disconnect()
-    }
-  }, [children])
-
-  const scrollByStep = (direction) => {
-    const row = rowRef.current
-    if (!row) return
-    row.scrollBy({
-      left: direction * Math.max(row.clientWidth * 0.75, 180),
-      behavior: 'smooth',
-    })
-  }
-
-  return (
-    <div className="relative pb-3">
-      {canScrollLeft && (
-        <button
-          type="button"
-          onClick={() => scrollByStep(-1)}
-          aria-label={`${ariaLabel}: mover a la izquierda`}
-          className="absolute left-0 top-1/2 z-10 -translate-y-1/2 h-8 w-8 rounded-full border border-gray-200/80 bg-white/95 text-[#1d1d1f] shadow-sm transition-colors hover:border-[#0071e3] hover:text-[#0071e3] dark:border-white/10 dark:bg-black/90 dark:text-white"
-        >
-          <ChevronLeftIcon className="m-auto h-4 w-4" />
-        </button>
-      )}
-
-      {canScrollRight && (
-        <button
-          type="button"
-          onClick={() => scrollByStep(1)}
-          aria-label={`${ariaLabel}: mover a la derecha`}
-          className="absolute right-0 top-1/2 z-10 -translate-y-1/2 h-8 w-8 rounded-full border border-gray-200/80 bg-white/95 text-[#1d1d1f] shadow-sm transition-colors hover:border-[#0071e3] hover:text-[#0071e3] dark:border-white/10 dark:bg-black/90 dark:text-white"
-        >
-          <ChevronRightIcon className="m-auto h-4 w-4" />
-        </button>
-      )}
-
-      <div
-        ref={rowRef}
-        className={`overflow-x-auto scrollbar-hide ${canScrollLeft ? 'pl-10' : ''} ${canScrollRight ? 'pr-10' : ''}`}
-      >
-        <div className={rowClassName}>
-          {children}
-        </div>
-      </div>
-    </div>
-  )
-}
+import ScrollableRow from './ScrollableRow'
 
 // El mismo botón se usa con la búsqueda abierta y cerrada. La `key` del badge
 // es la cantidad: al cambiar, React lo remonta y la animación vuelve a correr.
@@ -210,7 +134,7 @@ export default function Header({
 
         {/* En home los tiles del medio reemplazan a los chips: arriba queda solo ELEEME */}
         {!searchOpen && !isHome && (
-          <ScrollableChipsRow
+          <ScrollableRow
             ariaLabel="Categorías"
             rowClassName="flex w-max min-w-full gap-2 px-1"
           >
@@ -231,11 +155,11 @@ export default function Header({
                 </button>
               )
             })}
-          </ScrollableChipsRow>
+          </ScrollableRow>
         )}
 
         {!searchOpen && models.length > 0 && (
-          <ScrollableChipsRow
+          <ScrollableRow
             ariaLabel="Modelos"
             rowClassName="flex w-max min-w-full items-center gap-2 animate-slide-down"
           >
@@ -265,7 +189,7 @@ export default function Header({
                 {model}
               </button>
             ))}
-          </ScrollableChipsRow>
+          </ScrollableRow>
         )}
       </div>
     </header>

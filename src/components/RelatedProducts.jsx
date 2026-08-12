@@ -1,4 +1,5 @@
 import CompactProductCard from './CompactProductCard'
+import ScrollableRow from './ScrollableRow'
 
 export default function RelatedProducts({
   products,
@@ -19,7 +20,12 @@ export default function RelatedProducts({
         </p>
       </div>
 
-      <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+      <ScrollableRow
+        ariaLabel="Productos relacionados"
+        rowClassName="flex gap-3 pb-2"
+        // Centro del recuadro de la foto de las cards (aspect 4/3 sobre 230px).
+        arrowPosition="top-[86px] -translate-y-1/2"
+      >
         {products.map((product) => (
           <CompactProductCard
             key={product.id}
@@ -29,7 +35,7 @@ export default function RelatedProducts({
             onAddToCart={onAddToCart}
           />
         ))}
-      </div>
+      </ScrollableRow>
     </section>
   )
 }
