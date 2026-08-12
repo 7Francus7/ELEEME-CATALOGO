@@ -49,7 +49,31 @@ export default function CartSheet({
     panelRef.current?.focus()
 
     const handleKey = (event) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') {
+        onClose()
+        return
+      }
+
+      // Igual que en el modal de producto: sin esto, con Tab te vas al catálogo
+      // de atrás con el pedido todavía abierto encima.
+      if (event.key === 'Tab' && panelRef.current) {
+        const focusables = panelRef.current.querySelectorAll(
+          'a[href], button:not([disabled]), input:not([disabled]), textarea, select, [tabindex]:not([tabindex="-1"])'
+        )
+        const visible = [...focusables].filter((el) => el.offsetParent !== null)
+        if (!visible.length) return
+
+        const first = visible[0]
+        const last = visible[visible.length - 1]
+
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
     }
 
     window.addEventListener('keydown', handleKey)
@@ -134,11 +158,21 @@ export default function CartSheet({
                           Incluye: {item.includedItems.join(', ')}
                         </p>
                       )}
-                      {typeof item.availableStock === 'number' && (
+                      {item.unavailable ? (
+                        <p className="mt-2 text-xs font-medium text-red-500">
+                          {item.type === 'pack'
+                            ? 'Este pack se quedó sin stock. Quitalo para enviar el pedido.'
+                            : 'Se quedó sin stock. Quitalo para enviar el pedido.'}
+                        </p>
+                      ) : item.adjusted ? (
+                        <p className="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                          Bajamos la cantidad a {item.quantity}: es todo el stock que queda.
+                        </p>
+                      ) : typeof item.availableStock === 'number' ? (
                         <p className="mt-2 text-xs text-[#6e6e73] dark:text-[#86868b]">
                           {item.type === 'pack' ? 'Pack sin stock completo' : `Stock visible: ${item.availableStock}`}
                         </p>
-                      )}
+                      ) : null}
                     </div>
 
                     <button
@@ -207,8 +241,10 @@ export default function CartSheet({
               href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
+              // Con todo agotado el mensaje saldría vacío: el botón espera a que
+              // quede al menos un item que se pueda pedir.
               className={`inline-flex items-center justify-center gap-2 rounded-full text-sm font-semibold px-5 py-3.5 transition-all duration-200 ${
-                items.length
+                totalItems > 0
                   ? 'bg-[#25d366] hover:bg-[#22c55e] active:scale-[0.98] text-white'
                   : 'bg-[#d2d2d7] text-white pointer-events-none'
               }`}

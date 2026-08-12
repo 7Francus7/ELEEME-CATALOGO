@@ -48,10 +48,10 @@ export default function Header({
 }) {
   const [searchOpen, setSearchOpen] = useState(false)
 
-  const handleCloseSearch = () => {
-    setSearchOpen(false)
-    onSearchChange('')
-  }
+  // La X guarda el campo pero deja la búsqueda hecha: cerrarlo borraba los
+  // resultados que la persona acababa de conseguir. Para volver al catálogo
+  // completo está "Inicio", que aparece apenas hay una búsqueda activa.
+  const handleCloseSearch = () => setSearchOpen(false)
 
   const isHome = selectedCategory === 'Todos' && !searchQuery
 

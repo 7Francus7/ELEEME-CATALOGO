@@ -16,35 +16,62 @@ import CatalogImage from './CatalogImage'
 import DisclosureSection from './DisclosureSection'
 import RelatedProducts from './RelatedProducts'
 
-function ProductVideo({ video }) {
-  const [uploadedUrl, setUploadedUrl] = useState('')
+// Un video subido sin nube queda guardado como { key } en el IndexedDB del
+// navegador que lo subió: en cualquier otro dispositivo no existe. Antes eso
+// dejaba el título "Video del producto" con un hueco abajo, porque la sección
+// se dibujaba por la cantidad de videos cargados y no por los que esta persona
+// puede ver de verdad. Este hook resuelve cada uno y devuelve sólo los que van
+// a mostrar algo.
+function usePlayableVideos(videos) {
+  const [playable, setPlayable] = useState([])
+  const signature = videos.map((video) => video.key || video.url).join('|')
 
   useEffect(() => {
-    let objectUrl
+    let cancelled = false
+    const createdUrls = []
 
-    if (video.key) {
-      getVideo(video.key).then((blob) => {
-        if (blob) {
-          objectUrl = URL.createObjectURL(blob)
-          setUploadedUrl(objectUrl)
+    Promise.all(
+      videos.map(async (video) => {
+        if (video.key) {
+          const blob = await getVideo(video.key).catch(() => null)
+          if (!blob) return null
+          const objectUrl = URL.createObjectURL(blob)
+          createdUrls.push(objectUrl)
+          return { id: video.key, src: objectUrl, inline: true }
         }
+
+        const url = video.url?.trim()
+        if (!url) return null
+
+        // Inline para archivos de video directos y para los que sirve nuestro
+        // backend (/api/media manda el Content-Type correcto); el resto
+        // (YouTube y compañía) se abre en una pestaña.
+        const inline = /\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url) || /^\/api\/media\b/.test(url)
+        return { id: url, src: url, inline }
       })
-    }
+    ).then((list) => {
+      if (cancelled) {
+        createdUrls.forEach((url) => URL.revokeObjectURL(url))
+        return
+      }
+      setPlayable(list.filter(Boolean))
+    })
 
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl)
+      cancelled = true
+      createdUrls.forEach((url) => URL.revokeObjectURL(url))
     }
-  }, [video.key])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature])
 
-  const url = video.url?.trim()
-  // Reproducción inline para archivos de video directos y para los servidos por
-  // nuestro backend (/api/media, que manda el Content-Type correcto).
-  const isFileVideo = url && (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url) || /^\/api\/media\b/.test(url))
+  return playable
+}
 
-  if (uploadedUrl || isFileVideo) {
+function ProductVideo({ video }) {
+  if (video.inline) {
     return (
       <video
-        src={uploadedUrl || url}
+        src={video.src}
         controls
         playsInline
         preload="metadata"
@@ -53,23 +80,19 @@ function ProductVideo({ video }) {
     )
   }
 
-  if (url) {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 bg-[#1d1d1f] dark:bg-white dark:text-black text-white text-sm font-semibold px-4 py-3 rounded-xl active:scale-95 transition-all"
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z" />
-        </svg>
-        Ver video
-      </a>
-    )
-  }
-
-  return null
+  return (
+    <a
+      href={video.src}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-2 bg-[#1d1d1f] dark:bg-white dark:text-black text-white text-sm font-semibold px-4 py-3 rounded-xl active:scale-95 transition-all"
+    >
+      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z" />
+      </svg>
+      Ver video
+    </a>
+  )
 }
 
 export default function ProductModal({
@@ -123,7 +146,7 @@ export default function ProductModal({
   }
 
   const images = productImages(product)
-  const videos = productVideos(product)
+  const videos = usePlayableVideos(productVideos(product))
   const fitContain = product.imagen_ajuste === 'contain'
   const safeActive = Math.min(activeImage, Math.max(images.length - 1, 0))
   const hasVideo = videos.length > 0
@@ -680,8 +703,8 @@ export default function ProductModal({
                   {videos.length === 1 ? 'Video del producto' : 'Videos del producto'}
                 </h3>
                 <div className="space-y-3">
-                  {videos.map((video, index) => (
-                    <ProductVideo key={video.key || video.url || index} video={video} />
+                  {videos.map((video) => (
+                    <ProductVideo key={video.id} video={video} />
                   ))}
                 </div>
               </div>

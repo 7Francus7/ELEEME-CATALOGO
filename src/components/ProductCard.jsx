@@ -20,7 +20,10 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
   const fitContain = product.imagen_ajuste === 'contain'
   const images = productImages(product)
   const cover = images[0]
-  const hasVideo = productVideos(product).length > 0
+  // Sólo se anuncia el video si vive en una URL: los subidos sin nube quedan en
+  // el IndexedDB de un solo navegador, así que prometerlos acá termina en una
+  // ficha sin video para casi todo el mundo.
+  const hasVideo = productVideos(product).some((video) => video.url?.trim())
   const addLabel = !canAddDirectly ? 'Elegir modelo' : !inStock ? 'Sin stock' : 'Agregar'
 
   const handleAdd = (event) => {

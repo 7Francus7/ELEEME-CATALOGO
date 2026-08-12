@@ -77,6 +77,7 @@ export function useCart(products, packs) {
 
           const price = Number.isFinite(pack.price) ? pack.price : estimatedPackPrice(pack, products)
           const quantity = Number(rawItem.quantity) || 0
+          const inStock = packHasStock(pack, products)
 
           return {
             key: packItemKey(pack.id),
@@ -87,7 +88,9 @@ export function useCart(products, packs) {
             price,
             lineTotal: price !== null ? price * quantity : null,
             includedItems: describePackItems(pack, products),
-            availableStock: packHasStock(pack, products) ? null : 0,
+            availableStock: inStock ? null : 0,
+            adjusted: false,
+            unavailable: !inStock,
           }
         }
 
@@ -95,7 +98,13 @@ export function useCart(products, packs) {
         if (!product) return null
 
         const price = typeof product.precio === 'number' ? product.precio : null
-        const quantity = Number(rawItem.quantity) || 0
+        const requested = Number(rawItem.quantity) || 0
+        const availableStock = modelStock(product, rawItem.model || null)
+
+        // El stock puede bajar después de agregar (el admin lo edita, o alguien
+        // compró antes). Sin recortar acá, el pedido de WhatsApp salía pidiendo
+        // más unidades de las que hay.
+        const quantity = availableStock === null ? requested : Math.min(requested, availableStock)
 
         return {
           key: productItemKey(rawItem.productId, rawItem.model),
@@ -106,27 +115,33 @@ export function useCart(products, packs) {
           name: product.nombre,
           price,
           lineTotal: price !== null ? price * quantity : null,
-          availableStock: modelStock(product, rawItem.model || null),
+          availableStock,
+          adjusted: quantity < requested,
+          unavailable: quantity === 0,
         }
       })
       .filter(Boolean)
   }, [packs, products, rawItems])
 
+  // Lo que se agotó sigue visible en el pedido para que la persona lo vea y lo
+  // saque, pero no suma al total ni entra en el mensaje de WhatsApp.
+  const orderable = useMemo(() => items.filter((item) => !item.unavailable), [items])
+
   const totalItems = useMemo(
-    () => items.reduce((sum, item) => sum + item.quantity, 0),
-    [items]
+    () => orderable.reduce((sum, item) => sum + item.quantity, 0),
+    [orderable]
   )
 
   const totalPrice = useMemo(() => {
-    if (!items.length) return null
-    if (items.some((item) => typeof item.lineTotal !== 'number')) return null
-    return items.reduce((sum, item) => sum + item.lineTotal, 0)
-  }, [items])
+    if (!orderable.length) return null
+    if (orderable.some((item) => typeof item.lineTotal !== 'number')) return null
+    return orderable.reduce((sum, item) => sum + item.lineTotal, 0)
+  }, [orderable])
 
   const whatsappUrl = useMemo(() => {
-    if (!items.length) return `https://wa.me/${WHATSAPP_NUMBER}`
-    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage(items, totalPrice))}`
-  }, [items, totalPrice])
+    if (!orderable.length) return `https://wa.me/${WHATSAPP_NUMBER}`
+    return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildWhatsAppMessage(orderable, totalPrice))}`
+  }, [orderable, totalPrice])
 
   const addItem = (product, selectedModel = null) => {
     if (usesModels(product) && !selectedModel) return 'missing_model'

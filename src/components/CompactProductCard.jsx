@@ -14,7 +14,9 @@ export default function CompactProductCard({
   const needsModel = usesModels(product)
   const canAddDirectly = !needsModel || !!activeModel
   const exactStock = canAddDirectly ? hasStock(product, activeModel) : null
-  const hasAnyStock = productHasAnyStock(product)
+  // Con un modelo elegido el badge habla de ese modelo. Mirando siempre el
+  // stock global salía "Disponible" arriba y "Sin stock" en el botón.
+  const hasAnyStock = canAddDirectly ? exactStock : productHasAnyStock(product)
   const image = productImages(product)[0]
   const savings = savingsAmount(product)
 
