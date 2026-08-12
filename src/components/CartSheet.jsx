@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatPrice } from '../data/products'
 import { MinusIcon, PlusIcon, ShoppingBagIcon, TrashIcon, WhatsAppIcon, XIcon } from './Icons'
 
@@ -15,6 +15,30 @@ export default function CartSheet({
   onClear,
 }) {
   const panelRef = useRef(null)
+
+  // Vaciar el pedido no se puede deshacer, así que pide un segundo toque en vez
+  // de borrar todo con un click distraído. Se cancela solo a los 4 segundos.
+  const [confirmClear, setConfirmClear] = useState(false)
+  const confirmTimer = useRef(null)
+
+  useEffect(() => () => clearTimeout(confirmTimer.current), [])
+
+  useEffect(() => {
+    if (!isOpen) setConfirmClear(false)
+  }, [isOpen])
+
+  const handleClear = () => {
+    if (!confirmClear) {
+      setConfirmClear(true)
+      clearTimeout(confirmTimer.current)
+      confirmTimer.current = setTimeout(() => setConfirmClear(false), 4000)
+      return
+    }
+
+    clearTimeout(confirmTimer.current)
+    setConfirmClear(false)
+    onClear()
+  }
 
   // Cerrar con Escape y devolver el foco a donde estaba, igual que en el modal
   // de producto: abierto el pedido, Escape es lo primero que intenta la gente.
@@ -195,11 +219,15 @@ export default function CartSheet({
 
             <button
               type="button"
-              onClick={onClear}
+              onClick={handleClear}
               disabled={!items.length}
-              className="inline-flex items-center justify-center rounded-full border border-gray-200 dark:border-white/10 text-sm font-semibold text-[#1d1d1f] dark:text-white px-5 py-3 transition-colors hover:border-red-400 hover:text-red-500 disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`inline-flex items-center justify-center rounded-full border text-sm font-semibold px-5 py-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                confirmClear
+                  ? 'border-red-400 text-red-500'
+                  : 'border-gray-200 dark:border-white/10 text-[#1d1d1f] dark:text-white hover:border-red-400 hover:text-red-500'
+              }`}
             >
-              Vaciar pedido
+              {confirmClear ? 'Tocá de nuevo para vaciar' : 'Vaciar pedido'}
             </button>
           </div>
         </div>

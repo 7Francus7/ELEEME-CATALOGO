@@ -1,7 +1,10 @@
 import { activeColors, formatPrice, hasStock, productImages, productVideos, savingsAmount, usesModels } from '../data/products'
+import { addToCartFeedback, useAddToCartFeedback } from '../hooks/useAddToCartFeedback'
 import CatalogImage from './CatalogImage'
 
 export default function ProductCard({ product, onOpen, onAddToCart, activeModel }) {
+  const { status: addStatus, addToCart } = useAddToCartFeedback(onAddToCart)
+  const feedback = addToCartFeedback(addStatus)
   const discount = product.precio_original
     ? Math.round((1 - product.precio / product.precio_original) * 100)
     : null
@@ -29,7 +32,7 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
     }
 
     if (!inStock) return
-    onAddToCart(product, activeModel)
+    addToCart(product, activeModel)
   }
 
   return (
@@ -170,12 +173,14 @@ export default function ProductCard({ product, onOpen, onAddToCart, activeModel 
             // px chico en mobile: la card mide ~126px y "Elegir modelo" necesita
             // 101px, así que con padding grande el texto caía en dos líneas.
             className={`w-full sm:w-auto flex-shrink-0 inline-flex items-center justify-center whitespace-nowrap min-h-[44px] text-[13px] font-semibold px-2 sm:px-4 py-2 rounded-full transition-all duration-200 ${
-              canAddDirectly && !inStock
-                ? 'bg-[#e8e8ed] dark:bg-white/10 text-[#6e6e73] dark:text-white/60 cursor-not-allowed'
-                : 'bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white shadow-sm shadow-blue-500/20'
+              feedback
+                ? feedback.className
+                : canAddDirectly && !inStock
+                  ? 'bg-[#e8e8ed] dark:bg-white/10 text-[#6e6e73] dark:text-white/60 cursor-not-allowed'
+                  : 'bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white shadow-sm shadow-blue-500/20'
             }`}
           >
-            {addLabel}
+            {feedback ? feedback.label : addLabel}
           </button>
         </div>
       </div>

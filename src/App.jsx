@@ -348,6 +348,7 @@ export default function App() {
       <CartSummaryBar
         totalItems={cartCount}
         totalPrice={cartTotal}
+        suppressed={cartOpen}
         onOpen={() => setCartOpen(true)}
       />
 

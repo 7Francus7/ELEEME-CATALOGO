@@ -1,4 +1,5 @@
 import { formatPrice, hasStock, productHasAnyStock, productImages, savingsAmount, usesModels } from '../data/products'
+import { addToCartFeedback, useAddToCartFeedback } from '../hooks/useAddToCartFeedback'
 import CatalogImage from './CatalogImage'
 
 export default function CompactProductCard({
@@ -8,6 +9,8 @@ export default function CompactProductCard({
   onAddToCart,
   mode = 'smart',
 }) {
+  const { status: addStatus, addToCart } = useAddToCartFeedback(onAddToCart)
+  const feedback = addToCartFeedback(addStatus)
   const needsModel = usesModels(product)
   const canAddDirectly = !needsModel || !!activeModel
   const exactStock = canAddDirectly ? hasStock(product, activeModel) : null
@@ -35,7 +38,7 @@ export default function CompactProductCard({
     }
 
     if (!exactStock) return
-    onAddToCart(product, activeModel)
+    addToCart(product, activeModel)
   }
 
   return (
@@ -105,12 +108,14 @@ export default function CompactProductCard({
             onClick={handleAction}
             disabled={isDisabled}
             className={`inline-flex items-center justify-center whitespace-nowrap min-h-[44px] rounded-full px-4 py-2 text-[13px] font-semibold transition-colors ${
-              isDisabled
-                ? 'bg-[#e8e8ed] dark:bg-white/10 text-[#6e6e73] dark:text-white/60 cursor-not-allowed'
-                : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
+              feedback
+                ? feedback.className
+                : isDisabled
+                  ? 'bg-[#e8e8ed] dark:bg-white/10 text-[#6e6e73] dark:text-white/60 cursor-not-allowed'
+                  : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
             }`}
           >
-            {actionLabel}
+            {feedback ? feedback.label : actionLabel}
           </button>
         </div>
       </div>

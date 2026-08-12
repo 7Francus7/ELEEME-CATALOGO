@@ -85,6 +85,28 @@ function ScrollableChipsRow({ ariaLabel, children, rowClassName = '' }) {
   )
 }
 
+// El mismo botón se usa con la búsqueda abierta y cerrada. La `key` del badge
+// es la cantidad: al cambiar, React lo remonta y la animación vuelve a correr.
+function CartButton({ cartCount, onOpenCart }) {
+  return (
+    <button
+      onClick={onOpenCart}
+      className="relative p-2.5 flex items-center justify-center text-[#1d1d1f] transition-colors hover:text-[#0071e3] dark:text-white dark:hover:text-[#0071e3]"
+      aria-label={cartCount > 0 ? `Ver pedido (${cartCount})` : 'Ver pedido'}
+    >
+      <ShoppingBagIcon className="w-5 h-5" />
+      {cartCount > 0 && (
+        <span
+          key={cartCount}
+          className="animate-badge-pop absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0071e3] text-white text-[10px] font-bold flex items-center justify-center"
+        >
+          {cartCount}
+        </span>
+      )}
+    </button>
+  )
+}
+
 export default function Header({
   categories,
   selectedCategory,
@@ -162,18 +184,7 @@ export default function Header({
                     <XIcon className="w-4 h-4" />
                   </button>
                 </div>
-                <button
-                  onClick={onOpenCart}
-                  className="relative p-2.5 flex items-center justify-center text-[#1d1d1f] transition-colors hover:text-[#0071e3] dark:text-white dark:hover:text-[#0071e3]"
-                  aria-label="Ver pedido"
-                >
-                  <ShoppingBagIcon className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0071e3] text-white text-[10px] font-bold flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
+                <CartButton cartCount={cartCount} onOpenCart={onOpenCart} />
               </div>
             ) : (
               <div className="flex items-center gap-1">
@@ -184,18 +195,7 @@ export default function Header({
                 >
                   <SearchIcon className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={onOpenCart}
-                  className="relative p-2.5 flex items-center justify-center text-[#1d1d1f] transition-colors hover:text-[#0071e3] dark:text-white dark:hover:text-[#0071e3]"
-                  aria-label="Ver pedido"
-                >
-                  <ShoppingBagIcon className="w-5 h-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0071e3] text-white text-[10px] font-bold flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
+                <CartButton cartCount={cartCount} onOpenCart={onOpenCart} />
                 <button
                   onClick={onToggleDark}
                   className="p-2.5 flex items-center justify-center text-[#1d1d1f] transition-colors hover:text-[#0071e3] dark:text-white dark:hover:text-[#0071e3]"

@@ -4,7 +4,7 @@ import { ChevronRightIcon, ShoppingBagIcon } from './Icons'
 
 const VISIBLE_MS = 3000
 
-export default function CartSummaryBar({ totalItems, totalPrice, onOpen }) {
+export default function CartSummaryBar({ totalItems, totalPrice, onOpen, suppressed = false }) {
   // 'visible' mientras se muestra, 'leaving' durante la animación de salida
   const [phase, setPhase] = useState('hidden')
   const lastCart = useRef(null)
@@ -17,6 +17,14 @@ export default function CartSummaryBar({ totalItems, totalPrice, onOpen }) {
       return
     }
 
+    // Con el pedido abierto la barra no aporta nada: se anota el cambio para no
+    // dispararla al cerrar, pero no se muestra debajo del panel.
+    if (suppressed) {
+      lastCart.current = cartSignature
+      setPhase('hidden')
+      return
+    }
+
     // Solo reaparece cuando el carrito cambia (agregar, quitar, cambiar cantidad)
     if (lastCart.current === cartSignature) return
     lastCart.current = cartSignature
@@ -24,7 +32,7 @@ export default function CartSummaryBar({ totalItems, totalPrice, onOpen }) {
     setPhase('visible')
     const timer = setTimeout(() => setPhase('leaving'), VISIBLE_MS)
     return () => clearTimeout(timer)
-  }, [totalItems, cartSignature])
+  }, [totalItems, cartSignature, suppressed])
 
   if (!totalItems || phase === 'hidden') return null
 
